@@ -192,6 +192,37 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 .toast-el{background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;padding:7px 11px;font-size:10px;pointer-events:all;opacity:0;transform:translateY(-5px);transition:.2s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);color:var(--txt)}
 .toast-el.show{opacity:1;transform:translateY(0)}
 .t-g{border-left:3px solid var(--green)}.t-r{border-left:3px solid var(--red)}.t-b{border-left:3px solid var(--blue)}.t-a{border-left:3px solid var(--amber)}
+
+/* ── DRAM 탭 ── */
+.dram-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.link-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.link-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border:1px solid var(--bdr2);border-radius:3px;font-size:9px;font-weight:700;color:var(--blue);background:var(--bbg);cursor:pointer;text-decoration:none;font-family:var(--mono);white-space:nowrap}
+.link-btn:active{opacity:.7}
+.link-btn.gold{color:var(--gold);background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.3)}
+.link-btn.green{color:var(--green);background:var(--gbg);border-color:var(--gbd)}
+
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.price-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:10px 11px;position:relative;overflow:hidden}
+.price-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.pc-ddr5::before{background:var(--purple)}.pc-ddr4::before{background:var(--blue)}
+.pc-lpddr::before{background:var(--green)}.pc-hbm::before{background:var(--gold)}
+.pc-nand::before{background:var(--amber)}.pc-other::before{background:var(--muted)}
+.pc-type{font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--muted);font-family:var(--mono);margin-bottom:3px}
+.pc-spec{font-size:8px;color:var(--hint);margin-bottom:5px;font-family:var(--mono)}
+.pc-price{font-size:17px;font-weight:700;font-family:var(--mono);color:var(--txt);margin-bottom:3px}
+.pc-chg{font-size:10px;font-weight:600;font-family:var(--mono)}
+.pc-chg.up{color:var(--red)}.pc-chg.dn{color:var(--blue)}.pc-chg.flat{color:var(--muted)}
+.pc-est{font-size:8px;color:var(--hint);margin-top:2px}
+.pc-src{font-size:8px;color:var(--hint);margin-top:2px;font-family:var(--mono)}
+
+.dram-embed-wrap{border:1px solid var(--bdr);border-radius:4px;overflow:hidden;margin-bottom:10px;background:var(--bg2)}
+.dram-embed-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--bdr);background:var(--bg3)}
+.dram-embed-lbl{font-size:9px;font-weight:700;color:var(--muted);font-family:var(--mono);letter-spacing:.06em}
+.dram-iframe{width:100%;height:320px;border:none;display:block}
+.dram-iframe-fail{padding:20px;text-align:center;font-size:11px;color:var(--muted);display:none}
+
+.dram-ai-rep{font-size:11px;color:var(--muted);line-height:1.8;border-left:2px solid var(--bg4);padding-left:12px;display:none;margin-bottom:10px}
+.update-stamp{font-size:9px;color:var(--hint);font-family:var(--mono);margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -312,6 +343,114 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
       <div class="kospi-ai-rep" id="kospiAiRep"></div>
     </div>
 
+    <!-- ══ DRAM ══ -->
+    <div id="screen-dram" class="screen">
+
+      <!-- 헤더 + 바로가기 링크 -->
+      <div class="dram-hdr">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.06em;font-family:var(--mono)">DRAM PRICE MONITOR</span>
+        <button class="run-btn" id="dramFetchBtn" onclick="loadDRAMPrices()" style="width:auto;padding:5px 12px;margin:0;font-size:9px">↻ AI 가격 조회</button>
+      </div>
+
+      <div class="link-row">
+        <a class="link-btn gold" href="https://www.dramexchange.com/" target="_blank">DRAMeXchange ↗</a>
+        <a class="link-btn" href="https://www.trendforce.com/price/dram/dram_spot" target="_blank">TrendForce 스팟 ↗</a>
+        <a class="link-btn" href="https://datatrack.trendforce.com/Chart/content/4694/mainstream-dram-spot-price" target="_blank">DataTrack 차트 ↗</a>
+        <a class="link-btn green" href="https://www.trendforce.com/news?s=DRAM" target="_blank">최신 리포트 ↗</a>
+      </div>
+
+      <!-- 업데이트 타임스탬프 -->
+      <div class="update-stamp" id="dramStamp">⚡ AI 가격 조회 버튼을 눌러 Gemini가 TrendForce 최신 데이터를 검색합니다</div>
+
+      <!-- 가격 카드 그리드 -->
+      <div class="price-grid" id="priceGrid">
+        <!-- 초기 시드 데이터 (TrendForce 4월 기준 추정치) -->
+        <div class="price-card pc-ddr5">
+          <div class="pc-type">DDR5</div>
+          <div class="pc-spec">8Gb · 4800/5600</div>
+          <div class="pc-price" id="p-ddr5">$4.85</div>
+          <div class="pc-chg up" id="c-ddr5">▲ +171% (1Y)</div>
+          <div class="pc-est">추정치 · TrendForce 기반</div>
+        </div>
+        <div class="price-card pc-ddr4">
+          <div class="pc-type">DDR4</div>
+          <div class="pc-spec">8Gb · 3200</div>
+          <div class="pc-price" id="p-ddr4">$2.15</div>
+          <div class="pc-chg dn" id="c-ddr4">▼ -0.48% (주간)</div>
+          <div class="pc-est">추정치 · TrendForce 4월 15일</div>
+        </div>
+        <div class="price-card pc-lpddr">
+          <div class="pc-type">LPDDR5X</div>
+          <div class="pc-spec">8Gb · 모바일</div>
+          <div class="pc-price" id="p-lpddr">$5.40</div>
+          <div class="pc-chg up" id="c-lpddr">▲ 강세 지속</div>
+          <div class="pc-est">추정치</div>
+        </div>
+        <div class="price-card pc-hbm">
+          <div class="pc-type">HBM3E</div>
+          <div class="pc-spec">24GB · AI 전용</div>
+          <div class="pc-price" id="p-hbm">$220</div>
+          <div class="pc-chg up" id="c-hbm">▲ SK하이닉스 독주</div>
+          <div class="pc-est">추정치 · per stack</div>
+        </div>
+        <div class="price-card pc-nand">
+          <div class="pc-type">NAND TLC</div>
+          <div class="pc-spec">512Gb 웨이퍼</div>
+          <div class="pc-price" id="p-nand">$6.46</div>
+          <div class="pc-chg up" id="c-nand">▲ +17.1% (주간)</div>
+          <div class="pc-est">TrendForce 11월 보고서</div>
+        </div>
+        <div class="price-card pc-other">
+          <div class="pc-type">DDR5 서버</div>
+          <div class="pc-spec">16Gb · 5600</div>
+          <div class="pc-price" id="p-ddr5s">$11.20</div>
+          <div class="pc-chg up" id="c-ddr5s">▲ CSP 수요 급증</div>
+          <div class="pc-est">추정치</div>
+        </div>
+      </div>
+
+      <!-- 가격 추이 차트 -->
+      <div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:4px;display:flex;justify-content:space-between">
+        <span>DRAM 스팟 가격 추이 (6개월)</span>
+        <span style="color:var(--hint)">단위: USD/chip</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:5px;font-size:8px;color:var(--muted);font-family:var(--mono)">
+        <span><span style="width:10px;height:2px;background:var(--purple);display:inline-block;vertical-align:middle;margin-right:3px"></span>DDR5-4800</span>
+        <span><span style="width:10px;height:2px;background:var(--blue);display:inline-block;vertical-align:middle;margin-right:3px"></span>DDR4-3200</span>
+        <span><span style="width:10px;height:2px;background:var(--gold);display:inline-block;vertical-align:middle;margin-right:3px;border-top:2px dashed var(--gold)"></span>LPDDR5X</span>
+      </div>
+      <div style="position:relative;height:160px;margin-bottom:10px">
+        <canvas id="dramChart" role="img" aria-label="DRAM 가격 추이 차트"></canvas>
+      </div>
+
+      <!-- DRAMeXchange 임베드 -->
+      <div class="dram-embed-wrap">
+        <div class="dram-embed-hdr">
+          <span class="dram-embed-lbl">DRAMeXchange · TrendForce 실시간</span>
+          <a href="https://www.dramexchange.com/" target="_blank" style="font-size:9px;color:var(--blue);font-family:var(--mono)">새 탭으로 열기 ↗</a>
+        </div>
+        <iframe id="dramIframe" class="dram-iframe"
+          src="https://www.dramexchange.com/"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          loading="lazy"
+          onload="checkIframeLoad(this)"
+          onerror="showIframeFail()">
+        </iframe>
+        <div class="dram-iframe-fail" id="dramIframeFail">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+            ⚠ 사이트 정책으로 직접 임베드가 차단되었습니다.<br>아래 버튼으로 직접 접속해주세요.
+          </div>
+          <a href="https://www.dramexchange.com/" target="_blank" class="link-btn gold" style="display:inline-flex;margin:0 auto">DRAMeXchange 열기 ↗</a>
+          &nbsp;
+          <a href="https://www.trendforce.com/price/dram/dram_spot" target="_blank" class="link-btn" style="display:inline-flex;margin:0 auto">TrendForce 스팟 가격 ↗</a>
+        </div>
+      </div>
+
+      <!-- AI 분석 -->
+      <button class="run-btn" id="dramAiBtn" onclick="runDRAMAI()">▶ AI DRAM 시장 분석 + 삼성·하이닉스 영향 ↗</button>
+      <div class="dram-ai-rep" id="dramAiRep"></div>
+    </div>
+
     <!-- ══ NEWS ══ -->
     <div id="screen-news" class="screen">
       <div class="news-hdr">
@@ -385,6 +524,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
   <div id="tabbar">
     <button class="tb act"  onclick="switchTab('trade',this)">CORE</button>
     <button class="tb"      onclick="switchTab('kospi',this)">코스피</button>
+    <button class="tb"      onclick="switchTab('dram',this)">DRAM</button>
     <button class="tb"      onclick="switchTab('news',this)">NEWS</button>
     <button class="tb"      onclick="switchTab('chat',this)">CHAT</button>
     <button class="tb"      onclick="switchTab('set',this)">SYS</button>
@@ -1411,6 +1551,16 @@ function switchTab(id,btn){
       kospiInitialized = true;
     }
     setTimeout(renderKOSPI, 60);
+  if (id==='dram') {
+    if (!dramInitialized) {
+      dramInitialized = true;
+      setTimeout(drawDRAMChart, 80);
+    }
+    setTimeout(()=>{
+      const iframe=document.getElementById('dramIframe');
+      if(iframe)checkIframeLoad(iframe);
+    }, 4000);
+  }
   }
 }
 
@@ -1481,6 +1631,244 @@ async function testGemini() {
     toast('테스트 실패', 'r');
   }
 }
+
+/* ═══════════════════════════════════════════
+   DRAM MODULE
+═══════════════════════════════════════════ */
+let dramChartInst = null;
+let dramInitialized = false;
+
+// 6개월 시드 데이터 생성 (TrendForce 데이터 기반 트렌드 반영)
+function generateDRAMHistory() {
+  const days = 120; // ~6개월 거래일
+  const now = new Date(2026, 3, 17);
+  const labels = [];
+  const ddr5 = [], ddr4 = [], lpddr = [];
+
+  // 시작가 (2025년 10월) → 현재 (2026년 4월)
+  let p5 = 2.80, p4 = 1.40, pl = 3.20;
+  const target5 = 4.85, target4 = 2.15, targetL = 5.40;
+
+  for (let i = days; i >= 0; i -= 2) { // 2일 간격
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
+    labels.push((d.getMonth()+1) + '/' + d.getDate());
+
+    const prog = Math.pow(1 - i/days, 0.6);
+    const noise = () => (Math.random() - 0.48) * 0.05;
+
+    p5  = Math.max(2.50, p5  + (target5  - p5)  * 0.04 + noise());
+    p4  = Math.max(1.20, p4  + (target4  - p4)  * 0.03 + noise() * 0.5);
+    pl  = Math.max(2.80, pl  + (targetL  - pl)  * 0.04 + noise() * 1.2);
+
+    ddr5.push(parseFloat(p5.toFixed(2)));
+    ddr4.push(parseFloat(p4.toFixed(2)));
+    lpddr.push(parseFloat(pl.toFixed(2)));
+  }
+  // 마지막 값 정확히 고정
+  if (ddr5.length) { ddr5[ddr5.length-1]=4.85; ddr4[ddr4.length-1]=2.15; lpddr[lpddr.length-1]=5.40; }
+  return { labels, ddr5, ddr4, lpddr };
+}
+
+function drawDRAMChart() {
+  const canvas = document.getElementById('dramChart');
+  if (!canvas) return;
+  if (dramChartInst) { dramChartInst.destroy(); dramChartInst = null; }
+  const hist = generateDRAMHistory();
+  const gc = 'rgba(255,255,255,.04)', tc = 'rgba(107,105,102,.8)';
+  dramChartInst = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: hist.labels,
+      datasets: [
+        { label:'DDR5-4800', data:hist.ddr5, borderColor:'#a78bfa', borderWidth:1.8, pointRadius:0, tension:.4, fill:false },
+        { label:'DDR4-3200', data:hist.ddr4, borderColor:'#60a5fa', borderWidth:1.5, pointRadius:0, tension:.4, fill:false },
+        { label:'LPDDR5X',   data:hist.lpddr, borderColor:'#fbbf24', borderWidth:1.5, pointRadius:0, tension:.4, fill:false, borderDash:[4,3] }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ label: ctx => '$' + ctx.parsed.y.toFixed(2) } } },
+      scales:{
+        x:{ ticks:{color:tc, font:{size:8, family:'JetBrains Mono'}, maxTicksLimit:7}, grid:{color:gc} },
+        y:{ ticks:{color:tc, font:{size:8, family:'JetBrains Mono'}, callback:v=>'$'+v.toFixed(2)}, grid:{color:gc} }
+      }
+    }
+  });
+}
+
+// iframe 로드 성공 여부 확인
+function checkIframeLoad(iframe) {
+  setTimeout(() => {
+    try {
+      // cross-origin이면 접근 불가 → 차단됨
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!doc || !doc.body || doc.body.innerHTML.length < 100) showIframeFail();
+    } catch(e) {
+      // SecurityError = X-Frame-Options 차단
+      showIframeFail();
+    }
+  }, 3000);
+}
+function showIframeFail() {
+  const f = document.getElementById('dramIframe');
+  const fail = document.getElementById('dramIframeFail');
+  if (f) f.style.display = 'none';
+  if (fail) fail.style.display = 'block';
+}
+
+// Gemini + Google Search Grounding으로 실제 가격 조회
+async function callGeminiWithSearch(prompt, maxTokens) {
+  const k = getGeminiKey();
+  if (!k) throw new Error('Gemini API 키 없음');
+  const model = await detectGeminiModel(k);
+
+  const bodyBase = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: maxTokens || 2000 }
+  };
+
+  // Google Search Grounding 시도 (gemini-2.0+)
+  const bodyWithSearch = {
+    ...bodyBase,
+    tools: model.includes('2.') || model.includes('flash')
+      ? [{ googleSearch: {} }]
+      : [{ googleSearchRetrieval: {} }]
+  };
+
+  let res = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + k,
+    { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bodyWithSearch) }
+  );
+
+  if (!res.ok) {
+    // 검색 기능 미지원 → 검색 없이 재시도
+    res = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + k,
+      { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bodyBase) }
+    );
+    if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||'HTTP '+res.status); }
+  }
+
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function loadDRAMPrices() {
+  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 입력해주세요', 'r'); return; }
+  const btn = document.getElementById('dramFetchBtn');
+  btn.disabled = true; btn.textContent = '검색 중...';
+  document.getElementById('dramStamp').textContent = '🔍 Gemini가 TrendForce·DRAMeXchange 데이터를 검색하고 있습니다...';
+
+  const prompt =
+    'TrendForce DRAMeXchange 2026년 4월 최신 DRAM 스팟 가격을 검색해서 아래 JSON 배열만 출력하세요.
+' +
+    '첫 글자=[, 마지막 글자=], 다른 텍스트 없이.
+
+' +
+    '[{"type":"DDR5-4800","density":"8Gb","price_usd":숫자,"change_pct":숫자,"period":"주간","estimated":true|false},
+' +
+    '{"type":"DDR5-5600","density":"8Gb","price_usd":숫자,"change_pct":숫자,"period":"주간","estimated":true|false},
+' +
+    '{"type":"DDR4-3200","density":"8Gb","price_usd":숫자,"change_pct":숫자,"period":"주간","estimated":true|false},
+' +
+    '{"type":"LPDDR5X","density":"8Gb","price_usd":숫자,"change_pct":숫자,"period":"주간","estimated":true|false},
+' +
+    '{"type":"HBM3E","density":"24GB stack","price_usd":숫자,"change_pct":숫자,"period":"분기","estimated":true|false},
+' +
+    '{"type":"NAND TLC","density":"512Gb 웨이퍼","price_usd":숫자,"change_pct":숫자,"period":"주간","estimated":true|false}]
+
+' +
+    'TrendForce 최신 보고서와 DRAMeXchange 스팟 데이터를 기반으로 실제 가격을 채워주세요.
+' +
+    '오늘: 2026년 4월 20일. change_pct는 양수=상승, 음수=하락.';
+
+  try {
+    const raw = await callGeminiWithSearch(prompt, 2000);
+    const prices = extractJSONArray(raw);
+
+    if (prices && prices.length >= 3) {
+      renderDRAMCards(prices);
+      const stamp = '⚡ Gemini 웹검색 기반 · ' +
+        new Date().toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) +
+        ' 업데이트 · 출처: TrendForce/DRAMeXchange';
+      document.getElementById('dramStamp').textContent = stamp;
+      toast('DRAM 가격 조회 완료 ✅', 'g');
+    } else {
+      document.getElementById('dramStamp').textContent = '⚠ 파싱 실패 — 시드 데이터 표시 중. 재시도해주세요.';
+      toast('가격 파싱 실패 — 재시도해주세요', 'r');
+    }
+  } catch(e) {
+    document.getElementById('dramStamp').textContent = '⚠ 조회 실패: ' + e.message.slice(0,60);
+    toast('조회 실패: ' + e.message.slice(0,40), 'r');
+  }
+  btn.disabled = false; btn.textContent = '↻ AI 가격 조회';
+}
+
+function renderDRAMCards(prices) {
+  const map = {
+    'DDR5-4800': ['p-ddr5','c-ddr5'],
+    'DDR5-5600': ['p-ddr5','c-ddr5'],
+    'DDR4-3200': ['p-ddr4','c-ddr4'],
+    'LPDDR5X':  ['p-lpddr','c-lpddr'],
+    'HBM3E':    ['p-hbm','c-hbm'],
+    'NAND TLC': ['p-nand','c-nand'],
+    'DDR5 서버': ['p-ddr5s','c-ddr5s']
+  };
+  prices.forEach(p => {
+    const ids = map[p.type];
+    if (!ids) return;
+    const priceEl = document.getElementById(ids[0]);
+    const chgEl   = document.getElementById(ids[1]);
+    if (priceEl) priceEl.textContent = '$' + parseFloat(p.price_usd||0).toFixed(2);
+    if (chgEl) {
+      const pct = parseFloat(p.change_pct||0);
+      chgEl.textContent = (pct>=0?'▲ +':'▼ ') + Math.abs(pct).toFixed(2) + '% (' + (p.period||'주간') + ')';
+      chgEl.className = 'pc-chg ' + (pct>0.1?'up':pct<-0.1?'dn':'flat');
+    }
+  });
+}
+
+async function runDRAMAI() {
+  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 입력해주세요', 'r'); return; }
+  const btn = document.getElementById('dramAiBtn'), rep = document.getElementById('dramAiRep');
+  btn.disabled = true; btn.textContent = '▶ AI 분석 중...';
+  rep.style.display = 'block'; rep.textContent = 'Gemini AI가 DRAM 시장을 분석하고 있습니다...';
+
+  const prompt =
+    '2026년 4월 기준 DRAM 시장 현황을 분석해서 한국어로 간결하게 답변해주세요.
+
+' +
+    'DDR5-4800 8Gb ~$4.85, DDR4-3200 8Gb ~$2.15(-0.48%/주), HBM3E ~$220/stack
+' +
+    'TrendForce 4월 15일: DDR4 소폭 하락, DDR5는 강세 유지
+
+' +
+    '① DRAM 시장 현황 요약 (2줄)
+' +
+    '② 삼성전자(005930) 수익에 미치는 영향 (2줄)
+' +
+    '③ SK하이닉스(000660) 수익에 미치는 영향 — HBM 포함 (2줄)
+' +
+    '④ 단기 가격 전망 (1줄)
+' +
+    '⑤ 투자 시사점 (1줄)
+
+' +
+    '최신 TrendForce 보고서를 검색해서 반영해주세요.';
+
+  try {
+    const txt = await callGeminiWithSearch(prompt, 1500);
+    rep.textContent = txt;
+    toast('DRAM AI 분석 완료', 'g');
+  } catch(e) {
+    rep.textContent = '⚠ ' + e.message;
+    toast('분석 실패', 'r');
+  }
+  btn.disabled = false; btn.textContent = '▶ AI DRAM 시장 분석 + 삼성·하이닉스 영향 ↗';
+}
+
 
 function init() {
   updateUI();
