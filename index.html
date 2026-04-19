@@ -1045,6 +1045,29 @@ function getGeminiKey() { return localStorage.getItem('gemini_key')||''; }
 function getAnthropicKey() { return localStorage.getItem('anthropic_key')||''; }
 
 /* ─ 강건한 JSON 배열 추출기 ─ */
+
+// 잘린 JSON에서 완성된 객체만 추출 (토큰 한도로 중간 잘림 대응)
+function recoverPartialJSON(text) {
+  const items = [];
+  let depth=0, start=-1, inStr=false, esc=false;
+  for (let i=0; i<text.length; i++) {
+    const c=text[i];
+    if (esc) { esc=false; continue; }
+    if (c==='\\' && inStr) { esc=true; continue; }
+    if (c==='"') { inStr=!inStr; continue; }
+    if (inStr) continue;
+    if (c==='{') { if(depth===0) start=i; depth++; }
+    else if (c==='}') {
+      depth--;
+      if (depth===0 && start!==-1) {
+        try { items.push(JSON.parse(text.slice(start, i+1))); } catch(_) {}
+        start=-1;
+      }
+    }
+  }
+  return items.length ? items : null;
+}
+
 function extractJSONArray(raw) {
   if (!raw) return null;
   // Step 1: 마크다운 코드블록 제거
@@ -1058,14 +1081,14 @@ function extractJSONArray(raw) {
     if(c==='['){if(depth===0)start=i;depth++;}
     else if(c===']'){depth--;if(depth===0&&start!==-1){try{const p=JSON.parse(text.slice(start,i+1));if(Array.isArray(p)&&p.length)return p;}catch(_){}}}
   }
-  // Step 4: 개별 객체 수집
+  // Step 4: 잘린 JSON 부분 복구 (핵심 추가!)
+  const recovered = recoverPartialJSON(text);
+  if (recovered && recovered.length) return recovered;
+  // Step 5: 개별 객체 수집 (전체 fallback)
   const items=[];
   for(const m of text.matchAll(/\{(?:[^{}]|\{[^{}]*\})*\}/g)){try{items.push(JSON.parse(m[0]));}catch(_){}}
   if(items.length)return items;
-  // Step 5: 줄 단위 파싱
-  const lines2=[];
-  for(const line of text.split('\n')){const l=line.trim().replace(/^[-*]\s*/,'');if(l.startsWith('{')&&l.endsWith('}')){try{lines2.push(JSON.parse(l));}catch(_){}}}
-  return lines2.length?lines2:null;
+  return null;
 }
 
 /* ─ Gemini 모델 자동 감지 ─ */
@@ -1210,79 +1233,82 @@ async function loadDailyNews() {
   const list = document.getElementById('news-list');
   const btn  = document.getElementById('newsFetchBtn');
   btn.disabled = true; btn.textContent = 'SCANNING...';
-  list.innerHTML = '<div class="news-loading"><div class="spin"></div>AI가 반도체 뉴스를 스캔하고 있습니다...<br><small style="color:var(--hint)">최초 실행 시 모델 감지로 15~20초 소요될 수 있습니다</small></div>';
+  list.innerHTML = '<div class="news-loading"><div class="spin"></div>' +
+    '<b>삼성전자 뉴스 수집 중...</b><br>' +
+    '<small style="color:var(--hint)">삼성 5개 + 하이닉스 5개 순차 수집 (각각 호출)</small></div>';
 
-  // ── 프롬프트: JSON만 출력하도록 강하게 지시 ──
-  const prompt =
-    '당신은 JSON 생성기입니다. 아래 지시를 반드시 따르세요.\n\n' +
-    '규칙:\n' +
-    '1. 첫 글자는 반드시 [ 이어야 합니다\n' +
-    '2. 마지막 글자는 반드시 ] 이어야 합니다\n' +
-    '3. 마크다운 코드블록(```), 설명 텍스트, 줄바꿈 외 다른 것은 절대 포함하지 마세요\n' +
-    '4. 모든 문자열 값은 큰따옴표로 감싸세요\n\n' +
-    '출력할 JSON 형식 (이 형식 외에 아무것도 출력하지 마세요):\n' +
-    '[{"corp":"SEC","title":"뉴스 제목","sum":"핵심 내용 1~2문장","impact":"positive"},{"corp":"HYX","title":"뉴스 제목","sum":"핵심 내용 1~2문장","impact":"negative"}]\n\n' +
-    'impact 값은 반드시 positive, negative, neutral 중 하나입니다.\n' +
-    'corp 값은 반드시 SEC(삼성전자) 또는 HYX(SK하이닉스) 중 하나입니다.\n\n' +
-    '삼성전자(SEC) 투자 관련 최신 뉴스 5개, SK하이닉스(HYX) 투자 관련 최신 뉴스 5개, 총 10개를 생성하세요.\n' +
-    '오늘 날짜: 2026년 4월 20일 (주말). 실제 뉴스를 기반으로 작성하세요.';
+  // ── 짧은 단일 뉴스 프롬프트 생성 ──
+  function makePrompt(corp, corpName, count) {
+    return (
+      '아래 JSON 배열만 출력하세요. 설명, 마크다운(```), 주석 불필요.
+' +
+      '첫 글자=[, 마지막 글자=]
 
-  let rawResponse = '';
-  try {
-    rawResponse = await callGemini(prompt, 2500);
+' +
+      '[{"corp":"' + corp + '","title":"제목(30자 이내)","sum":"한 문장 요약(50자 이내)","impact":"positive|negative|neutral"}]
 
-    // ── 강건한 파싱 ──
-    const news = extractJSONArray(rawResponse);
-
-    if (!news || !news.length) {
-      // 파싱 실패 시 디버그 패널 표시
-      list.innerHTML =
-        '<div class="news-err">' +
-        '❌ JSON 파싱 실패<br><br>' +
-        '<div style="font-size:9px;text-align:left;color:var(--muted);margin-top:8px">' +
-        '<b style="color:var(--gold)">AI 원본 응답 (처음 300자):</b><br>' +
-        '<pre style="white-space:pre-wrap;font-size:9px;color:var(--hint);margin-top:4px">' +
-        (rawResponse||'(응답 없음)').slice(0, 300).replace(/</g,'&lt;').replace(/>/g,'&gt;') +
-        '</pre>' +
-        '</div>' +
-        '<br>→ SCAN 버튼을 다시 누르거나<br>→ SYS 탭에서 모델을 재감지해 주세요' +
-        '</div>';
-      toast('JSON 파싱 실패 — 재시도해주세요', 'r');
-      btn.disabled = false; btn.textContent = '↻ SCAN';
-      return;
-    }
-
-    // ── 정규화 (필드가 없는 경우 기본값 처리) ──
-    const normalized = news.map((n, i) => ({
-      corp:   (n.corp || (i < 5 ? 'SEC' : 'HYX')).toUpperCase().includes('HYX') ? 'HYX' :
-              (n.corp || '').toUpperCase().includes('SEC') ? 'SEC' :
-              (i < 5 ? 'SEC' : 'HYX'),
-      title:  n.title  || n.headline || n.subject || '(제목 없음)',
-      sum:    n.sum    || n.summary  || n.content  || n.body || '(요약 없음)',
-      impact: ['positive','negative','neutral'].includes((n.impact||'').toLowerCase())
-              ? n.impact.toLowerCase() : 'neutral'
-    })).filter(n => n.title !== '(제목 없음)' || n.sum !== '(요약 없음)');
-
-    if (!normalized.length) throw new Error('유효한 뉴스 항목 없음');
-
-    newsCache = normalized;
-    renderNews();
-    toast('뉴스 ' + normalized.length + '건 수신 완료 ✅', 'g');
-
-  } catch(e) {
-    list.innerHTML =
-      '<div class="news-err">' +
-      '❌ ' + e.message + '<br><br>' +
-      '<div style="font-size:9px;text-align:left;color:var(--muted)">' +
-      (rawResponse ? '<b style="color:var(--gold)">AI 응답 미리보기:</b><br>' +
-        '<pre style="white-space:pre-wrap;font-size:8px;color:var(--hint);margin-top:4px">' +
-        rawResponse.slice(0, 200).replace(/</g,'&lt;') + '...</pre>' : '') +
-      '</div><br>' +
-      '• SYS 탭 → 모델 테스트 버튼으로 API 상태 확인<br>' +
-      '• 잠시 후 SCAN 재시도' +
-      '</div>';
-    toast('뉴스 수신 실패: ' + e.message.slice(0, 40), 'r');
+' +
+      corpName + '의 최신 주식 투자 뉴스 ' + count + '개를 위 형식으로 출력하세요.' +
+      ' 오늘: 2026년 4월 20일.'
+    );
   }
+
+  const allNews = [];
+  const errors  = [];
+
+  // ── 삼성전자 5개 ──
+  try {
+    const raw1 = await callGemini(makePrompt('SEC','삼성전자(005930)', 5), 4096);
+    const parsed1 = extractJSONArray(raw1);
+    if (parsed1 && parsed1.length) {
+      parsed1.forEach(n => { n.corp = 'SEC'; allNews.push(n); });
+      list.innerHTML = '<div class="news-loading"><div class="spin"></div>' +
+        '<b style="color:var(--green)">삼성전자 ' + parsed1.length + '건 ✅</b><br>SK하이닉스 수집 중...</div>';
+    } else {
+      errors.push('삼성전자 JSON 파싱 실패');
+      // 원본 응답 디버그
+      list.innerHTML = '<div class="news-loading"><div class="spin"></div>' +
+        '<span style="color:var(--amber)">삼성전자 파싱 실패 (재시도)</span><br>SK하이닉스 수집 중...</div>';
+    }
+  } catch(e) { errors.push('삼성전자: ' + e.message.slice(0,60)); }
+
+  // ── SK하이닉스 5개 ──
+  try {
+    const raw2 = await callGemini(makePrompt('HYX','SK하이닉스(000660)', 5), 4096);
+    const parsed2 = extractJSONArray(raw2);
+    if (parsed2 && parsed2.length) {
+      parsed2.forEach(n => { n.corp = 'HYX'; allNews.push(n); });
+    } else {
+      errors.push('SK하이닉스 JSON 파싱 실패');
+    }
+  } catch(e) { errors.push('SK하이닉스: ' + e.message.slice(0,60)); }
+
+  // ── 결과 처리 ──
+  if (!allNews.length) {
+    list.innerHTML =
+      '<div class="news-err">❌ 뉴스를 가져오지 못했습니다<br><br>' +
+      errors.map(e => '• ' + e).join('<br>') +
+      '<br><br>→ SCAN 버튼을 다시 눌러 재시도해 주세요<br>' +
+      '→ SYS 탭 → 모델 테스트로 API 상태를 확인해 주세요</div>';
+    toast('뉴스 수신 실패', 'r');
+    btn.disabled = false; btn.textContent = '↻ SCAN';
+    return;
+  }
+
+  // ── 정규화 ──
+  newsCache = allNews.map(n => ({
+    corp:   (n.corp||'').toUpperCase().includes('HYX') ? 'HYX' : 'SEC',
+    title:  (n.title || n.headline || '(제목 없음)').slice(0, 80),
+    sum:    (n.sum   || n.summary  || '(요약 없음)').slice(0, 200),
+    impact: ['positive','negative','neutral'].includes((n.impact||'').toLowerCase())
+            ? n.impact.toLowerCase() : 'neutral'
+  }));
+
+  renderNews();
+
+  const msg = '뉴스 ' + newsCache.length + '건 수신 완료' +
+    (errors.length ? ' (일부 오류: ' + errors.length + '건)' : ' ✅');
+  toast(msg, errors.length ? 'b' : 'g');
 
   btn.disabled = false; btn.textContent = '↻ SCAN';
 }
