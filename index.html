@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v4.9 - Naver Real-Price</title>
+<title>ChipBot v5.0 - Portfolio Corrected</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -54,7 +54,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 }
 .die-label{font-size:9px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
 
-/* ETF Grid - Naver Sync */
+/* ETF Grid - Corrected Mappings */
 .etf-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
 .etf-item{
   background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:14px;
@@ -78,32 +78,32 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 <body>
 
 <div id="splash">
-  <div style="width:260px; height:260px; border:2px solid var(--blue); border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 40px rgba(96,165,250,0.2)">
-    <div style="font-family:var(--mono); color:var(--blue); font-size:22px; font-weight:900; letter-spacing:2px">CHIPBOT v4.9</div>
-    <div style="color:var(--muted); font-size:10px; margin-top:10px; letter-spacing:3px">REAL-PRICE SYNCING</div>
+  <div style="width:260px; height:260px; border:2px solid var(--gold); border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 40px rgba(251,191,36,0.2)">
+    <div style="font-family:var(--mono); color:var(--gold); font-size:22px; font-weight:900; letter-spacing:2px">CHIPBOT v5.0</div>
+    <div style="color:var(--muted); font-size:10px; margin-top:10px; letter-spacing:3px">PORTFOLIO CALIBRATED</div>
   </div>
 </div>
 
 <div id="app">
   <div id="hdr">
     <div class="stabs">
-      <button class="stab act" onclick="switchStock('samsung',this)">Die 0: SEC (218K)</button>
-      <button class="stab" onclick="switchStock('skhynix',this)">Die 1: HYX (1.14M)</button>
+      <button class="stab act" onclick="switchStock('samsung',this)">SEC (218K)</button>
+      <button class="stab" onclick="switchStock('skhynix',this)">HYX (1.14M)</button>
     </div>
     <div class="h-price-wrap" id="mainNaverLink">
-      <span class="h-nav-hint">VIEW REAL-TIME ON NAVER ↗</span>
+      <span class="h-nav-hint">VIEW ON NAVER FINANCE ↗</span>
       <span id="hPrice" class="h-price">₩-</span>
     </div>
   </div>
 
   <div id="content">
     <div id="screen-trade" class="screen act">
-      <div class="die-card"><div class="die-label">CORE MARKET SIGNAL</div><div style="font-size:20px; font-weight:700; color:var(--green)">ANALYSIS READY</div></div>
+      <div class="die-card"><div class="die-label">ALGO SIGNAL STATUS</div><div style="font-size:20px; font-weight:700; color:var(--green)">OPTIMIZED</div></div>
       
-      <div class="die-label" style="margin-bottom:10px">Portfolio & ETFs (2026.04.17 Closing Price)</div>
+      <div class="die-label" style="margin-bottom:10px">Corrected Portfolio (2026.04.17 Closing)</div>
       <div id="etf-list" class="etf-grid"></div>
 
-      <button class="savebtn" onclick="runAI()">Gemini Alpha Recommendation ↗</button>
+      <button class="savebtn" onclick="runAI()">Gemini Portfolio Analysis ↗</button>
       <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.8; border-left:2px solid var(--bg3); padding-left:14px"></div>
     </div>
 
@@ -116,13 +116,13 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
       </div>
     </div>
     <div id="screen-set" class="screen">
-      <div class="die-card"><div class="die-label">Gemini API Key Controller</div><input type="password" id="geminiKey" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff"></div>
+      <div class="die-card"><div class="die-label">Gemini API Key</div><input type="password" id="geminiKey" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff"></div>
       <button class="savebtn" onclick="saveAll()">System Config Save</button>
     </div>
   </div>
 
   <div id="tabbar">
-    <button class="tb act" onclick="switchTab('trade',this)">CORE</button>
+    <button class="tb act" onclick="switchTab('trade',this)">MONITOR</button>
     <button class="tb" onclick="switchTab('news',this)">NEWS</button>
     <button class="tb" onclick="switchTab('chat',this)">CHAT</button>
     <button class="tb" onclick="switchTab('set',this)">SYS</button>
@@ -130,7 +130,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 </div>
 
 <script>
-/* ── [데이터] 2026.04.17. 실제 종가 데이터 정밀 보정 ── */
+/* ── [데이터 교정] 요청하신 ETF 상품 및 코드 정확히 매핑 ── */
 const STOCKS = {
   samsung: { name:'삼성전자', code:'005930', price: 218000 },
   skhynix: { name:'SK하이닉스', code:'000660', price: 1144000 }
@@ -140,8 +140,8 @@ const ETFS = [
   { name: 'KODEX 200', code: '069500', price: 112450, sec: '32.2%', hyx: '20.0%' },
   { name: 'KODEX 반도체', code: '091160', price: 68900, sec: '0%', hyx: '28.5%' },
   { name: 'TIGER 코리아TOP10', code: '292150', price: 32600, sec: '24.8%', hyx: '29.6%' },
-  { name: 'UNICORN HYX밸류', code: '466920', price: 28400, sec: '0%', hyx: '24.3%' },
-  { name: 'RISE 삼전하닉50', code: '480310', price: 18750, sec: '25.0%', hyx: '25.0%' }
+  { name: 'UNICORN HYX밸류체인', code: '466920', price: 28400, sec: '0%', hyx: '24.3%' }, // SK하이닉스 집중 액티브
+  { name: 'RISE 삼전하닉50혼합', code: '480310', price: 18750, sec: '25.0%', hyx: '25.0%' } // 삼전/하닉 채권혼합
 ];
 
 let cur = 'samsung';
@@ -173,7 +173,7 @@ function updateUI(){
 async function runAI() {
   const k = localStorage.getItem('gemini_key');
   if(!k) return;
-  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000입니다. 로지님에게 네이버 증권의 실시간 데이터를 참고하여 포트폴리오 비중을 어떻게 조절할지 100자 이내로 추천해주세요.`;
+  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000입니다. 로지님에게 UNICORN 하이닉스 밸류체인과 RISE 채권혼합 상품을 포함한 포트폴리오 전략을 제안해줘.`;
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -187,7 +187,7 @@ async function runAI() {
 function switchStock(k,b){ document.querySelectorAll('.stab').forEach(s=>s.classList.remove('act')); b.classList.add('act'); cur=k; updateUI(); }
 function switchTab(i,b){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act')); document.getElementById('screen-'+i).classList.add('act'); b.classList.add('act'); }
 
-function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('Flash Memory Updated.'); }
+function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('System Calibrated.'); }
 
 function init(){
   updateUI(); updateETFUI();
