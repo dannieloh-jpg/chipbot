@@ -3,14 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v5.1 - Perfect Calibration</title>
+<title>ChipBot v5.2 - Predictor PRO</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ChipBot">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2533/2533031.png">
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -21,103 +19,64 @@
   --red:#f87171; --blue:#60a5fa; --gold:#fbbf24;
   --font:'Inter', sans-serif; --mono:'JetBrains Mono', monospace;
 }
-
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px;overflow:hidden;}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);overflow:hidden;}
 #app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto; background:rgba(11,13,16,0.98); backdrop-filter:blur(15px)}
-
-/* Splash Screen */
-#splash {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items:center;
-  z-index: 10000; transition: opacity 0.8s;
-}
-#splash.hidden { opacity: 0; visibility: hidden; }
-
-/* Header */
-#hdr{padding:20px 16px 12px; border-bottom:1px solid var(--bdr); flex-shrink:0; padding-top:calc(20px + env(safe-area-inset-top))}
-.stabs{display:flex;gap:6px;margin-bottom:12px; overflow-x:auto; scrollbar-width:none;}
-.stab{padding:6px 16px; border:1px solid var(--bdr); border-radius:4px; font-size:11px; font-weight:600; color:var(--muted); background:var(--bg2); white-space:nowrap; cursor:pointer;}
+#hdr{padding:20px 16px 12px; border-bottom:1px solid var(--bdr); padding-top:calc(20px + env(safe-area-inset-top))}
+.stabs{display:flex;gap:6px;margin-bottom:12px; overflow-x:auto;}
+.stab{padding:6px 16px; border:1px solid var(--bdr); border-radius:4px; font-size:11px; font-weight:600; color:var(--muted); background:var(--bg2); cursor:pointer;}
 .stab.act{border-color:var(--green); color:var(--green); background:var(--green-bg)}
-
-.h-price-wrap{display:flex; flex-direction:column; gap:4px; cursor:pointer;}
-.h-price-wrap:active{opacity: 0.6;}
-.h-price{font-size:36px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono)}
-.h-nav-hint{font-size:10px; color:var(--blue); font-weight:700; letter-spacing:1px}
-
-/* Content Area */
+.h-price{font-size:36px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono); cursor:pointer}
 #content{flex:1;overflow-y:auto;padding:16px; scrollbar-width:none;}
 #content::-webkit-scrollbar{display:none}
-
-.die-card{
-  background:var(--bg2); border:1px solid var(--bdr); border-left:4px solid var(--muted);
-  border-radius:4px; padding:16px; margin-bottom:12px;
-}
-.die-label{font-size:9px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
-
-/* ETF Grid - Corrected Prices & Labels */
+.die-card{background:var(--bg2); border:1px solid var(--bdr); border-left:4px solid var(--muted); border-radius:4px; padding:16px; margin-bottom:12px;}
 .etf-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
-.etf-item{
-  background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:14px;
-  cursor:pointer; transition: all 0.2s; position:relative;
-}
-.etf-item:active{transform:scale(0.96); background:var(--bg2)}
+.etf-item{background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:12px; cursor:pointer;}
 .etf-title{font-size:11px; font-weight:700; margin-bottom:6px; color:var(--blue); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.etf-price{font-size:16px; font-weight:700; margin-bottom:6px; font-family:var(--mono)}
-.etf-weight{font-size:10px; color:var(--muted); line-height:1.4; margin-bottom:8px}
-.etf-link-tag{font-size:8px; color:var(--muted); border:1px solid var(--muted); padding:1px 3px; border-radius:2px; display:inline-block}
-
-/* System Controls */
-.savebtn{width:100%;padding:16px;background:var(--green-bg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;text-transform:uppercase; cursor:pointer}
+.etf-rank{font-size:10px; color:var(--gold); font-weight:700; margin-bottom:4px}
+.n-stack{background:var(--bg3); border-left:3px solid var(--blue); padding:12px; margin-bottom:10px; border-radius:0 4px 4px 0}
+.n-corp{font-size:9px; color:var(--blue); font-weight:900; margin-bottom:4px}
+.savebtn{width:100%;padding:16px;background:var(--green-bg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer}
 #tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom)}
 .tb{flex:1;padding:18px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:none;background:transparent;}
 .tb.act{color:var(--green); background:rgba(74,222,128,0.05)}
-
 .screen{display:none; height:100%}.screen.act{display:block}
 </style>
 </head>
 <body>
 
-<div id="splash">
-  <div style="width:260px; height:260px; border:2px solid var(--green); border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 40px rgba(74,222,128,0.2)">
-    <div style="font-family:var(--mono); color:var(--green); font-size:22px; font-weight:900; letter-spacing:2px">CHIPBOT v5.1</div>
-    <div style="color:var(--muted); font-size:10px; margin-top:10px; letter-spacing:3px">HBM VALUE CHAIN SYNC</div>
-  </div>
-</div>
-
 <div id="app">
   <div id="hdr">
     <div class="stabs">
-      <button class="stab act" onclick="switchStock('samsung',this)">SEC (218K)</button>
-      <button class="stab" onclick="switchStock('skhynix',this)">HYX (1.14M)</button>
+      <button class="stab act" onclick="switchStock('samsung',this)">SEC (005930)</button>
+      <button class="stab" onclick="switchStock('skhynix',this)">HYX (000660)</button>
     </div>
-    <div class="h-price-wrap" id="mainNaverLink">
-      <span class="h-nav-hint">VIEW REAL-TIME ON NAVER ↗</span>
+    <div onclick="openNaver('005930')">
+      <div style="font-size:10px; color:var(--muted)">LIVE PRICE (NAVER) ↗</div>
       <span id="hPrice" class="h-price">₩-</span>
     </div>
   </div>
 
   <div id="content">
     <div id="screen-trade" class="screen act">
-      <div class="die-card"><div class="die-label">CORE SIGNAL MONITOR</div><div style="font-size:20px; font-weight:700; color:var(--green)">SYSTEM CALIBRATED</div></div>
-      
-      <div class="die-label" style="margin-bottom:10px">Ecosystem Portfolio (4/17 Closing Price)</div>
+      <div class="die-card"><div style="font-size:9px;color:var(--muted)">ALPHA STRATEGY RANKING</div><div style="font-size:16px; font-weight:700; color:var(--gold)">1st: UNICORN HYX Value Chain</div></div>
       <div id="etf-list" class="etf-grid"></div>
-
-      <button class="savebtn" onclick="runAI()">Gemini Alpha Analysis ↗</button>
-      <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.8; border-left:2px solid var(--bg3); padding-left:14px"></div>
+      <button class="savebtn" onclick="runAI()">Gemini 예측 보고서 생성 ↗</button>
+      <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.7; border-left:2px solid var(--bg3); padding-left:14px"></div>
     </div>
 
-    <div id="screen-news" class="screen"><div id="news-list"></div></div>
+    <div id="screen-news" class="screen">
+      <div style="font-weight:700; margin-bottom:15px; letter-spacing:1px">TOP 10 SEMI NEWS (5+5)</div>
+      <div id="news-list"></div>
+    </div>
+
     <div id="screen-chat" class="screen">
       <div id="chat-logs" style="height:350px; overflow-y:auto; padding:10px"></div>
-      <div style="display:flex; padding:10px; background:var(--bg2); gap:10px; border-radius:4px">
-        <input type="text" id="chat-input" style="flex:1; background:transparent; border:none; color:#fff; outline:none" placeholder="비서에게 무엇이든 물어보세요." onkeypress="if(event.keyCode==13) sendChat()">
-        <button onclick="sendChat()" style="background:none; border:none; color:var(--green); font-weight:700">SEND</button>
-      </div>
+      <input type="text" id="chat-input" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff" placeholder="로지님, 분석이 필요하신가요?" onkeypress="if(event.keyCode==13) sendChat()">
     </div>
+
     <div id="screen-set" class="screen">
-      <div class="die-card"><div class="die-label">Gemini API Key Control</div><input type="password" id="geminiKey" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff"></div>
-      <button class="savebtn" onclick="saveAll()">Flash Memory Save</button>
+      <input type="password" id="geminiKey" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff" placeholder="Gemini Key">
+      <button class="savebtn" onclick="saveAll()">System Config Save</button>
     </div>
   </div>
 
@@ -130,70 +89,77 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 </div>
 
 <script>
-/* ── [데이터 교정] UNICORN 및 RISE 상품 정보 및 가격 정밀 매핑 ── */
-const STOCKS = {
-  samsung: { name:'삼성전자', code:'005930', price: 218000 },
-  skhynix: { name:'SK하이닉스', code:'000660', price: 1144000 }
-};
-
+const STOCKS = { samsung: { code:'005930', price: 218000 }, skhynix: { code:'000660', price: 1144000 } };
 const ETFS = [
-  { name: 'KODEX 200', code: '069500', price: 112450, sec: '32.2%', hyx: '20.0%' },
-  { name: 'KODEX 반도체', code: '091160', price: 68900, sec: '0%', hyx: '28.5%' },
-  { name: 'TIGER 코리아TOP10', code: '292150', price: 32600, sec: '24.8%', hyx: '29.6%' },
-  { name: 'UNICORN HYX밸류체인', code: '466920', price: 28400, sec: '0%', hyx: '24.3%' }, // 정확히 유니콘 SK하이닉스 매핑
-  { name: 'RISE 삼전하닉50혼합', code: '480310', price: 18750, sec: '25.0%', hyx: '25.0%' } // 정확히 라이즈 채권혼합 매핑
+  { name: 'UNICORN HYX밸류체인', code: '466920', price: 28400, rank: '1위' },
+  { name: 'KODEX 반도체', code: '091160', price: 68900, rank: '2위' },
+  { name: 'TIGER 코리아TOP10', code: '292150', price: 32600, rank: '3위' },
+  { name: 'KODEX 200', code: '069500', price: 112450, rank: '4위' },
+  { name: 'RISE 삼전하닉50혼합', code: '480310', price: 18750, rank: '5위' }
 ];
 
 let cur = 'samsung';
 
-/* 네이버 증권 연결 */
-function openNaverFinance(code) {
-  const url = `https://m.stock.naver.com/domestic/stock/${code}/total`;
-  window.open(url, '_blank');
-}
+function openNaver(code) { window.open(`https://m.stock.naver.com/domestic/stock/${code}/total`, '_blank'); }
 
 function updateETFUI() {
   const list = document.getElementById('etf-list');
   list.innerHTML = ETFS.map(e => `
-    <div class="etf-item" onclick="openNaverFinance('${e.code}')">
+    <div class="etf-item" onclick="openNaver('${e.code}')">
+      <div class="etf-rank">${e.rank}</div>
       <div class="etf-title">${e.name}</div>
-      <div class="etf-price">₩${e.price.toLocaleString()}</div>
-      <div class="etf-weight">S:${e.sec} / H:${e.hyx}</div>
-      <span class="etf-link-tag">NAVER SYNC ↗</span>
+      <div style="font-size:14px; font-weight:700; font-family:var(--mono)">₩${e.price.toLocaleString()}</div>
     </div>
   `).join('');
 }
 
-function updateUI(){
-  const s = STOCKS[cur]; 
-  document.getElementById('hPrice').textContent=`₩${s.price.toLocaleString()}`;
-  document.getElementById('mainNaverLink').onclick = () => openNaverFinance(s.code);
-}
-
-async function runAI() {
+async function loadDailyNews() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted)">실시간 데이터 파싱 중...</div>`;
+  
   const k = localStorage.getItem('gemini_key');
-  if(!k) return;
-  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000 상황입니다. UNICORN 하이닉스 밸류체인 ETF와 RISE 채권혼합 전략을 포함하여 로지님에게 짧고 명확한 조언을 해주세요.`;
+  const prompt = `삼성전자 최신 중요 뉴스 5개, SK하이닉스 최신 중요 뉴스 5개를 요약해줘. 
+  반드시 다음 JSON 형식으로만 대답해: [{"corp":"SEC|HYX", "title":"제목", "sum":"내용"}]`;
+  
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
     });
     const data = await res.json();
-    document.getElementById('aiRep').textContent = data.candidates[0].content.parts[0].text;
-  } catch(e) { document.getElementById('aiRep').textContent = "연결 오류"; }
+    const news = JSON.parse(data.candidates[0].content.parts[0].text.match(/\[.*\]/s)[0]);
+    list.innerHTML = news.map(n => `
+      <div class="n-stack">
+        <div class="n-corp">${n.corp}</div>
+        <div style="font-size:12px; font-weight:700; margin-bottom:4px">${n.title}</div>
+        <div style="font-size:11px; color:var(--muted); line-height:1.4">${n.sum}</div>
+      </div>
+    `).join('');
+  } catch(e) { list.innerHTML = `<div style="padding:20px;">뉴스 로드 실패 (API 키 확인 요망)</div>`; }
+}
+
+async function runAI() {
+  const k = localStorage.getItem('gemini_key');
+  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000입니다. UNICORN HYX밸류체인이 1등으로 예측된 이유와 각 ETF별 매수 전략을 로지님에게 위트있게 설명해줘.`;
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+  });
+  const data = await res.json();
+  document.getElementById('aiRep').textContent = data.candidates[0].content.parts[0].text;
 }
 
 function switchStock(k,b){ document.querySelectorAll('.stab').forEach(s=>s.classList.remove('act')); b.classList.add('act'); cur=k; updateUI(); }
-function switchTab(i,b){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act')); document.getElementById('screen-'+i).classList.add('act'); b.classList.add('act'); }
-
-function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('System Calibrated Successfully.'); }
-
-function init(){
-  updateUI(); updateETFUI();
-  document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||"";
-  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 2000);
+function switchTab(i,b){ 
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); 
+  document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act')); 
+  document.getElementById('screen-'+i).classList.add('act'); b.classList.add('act');
+  if(i==='news') loadDailyNews();
 }
+
+function updateUI(){ document.getElementById('hPrice').textContent=`₩${STOCKS[cur].price.toLocaleString()}`; }
+function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('System Saved.'); }
+function init(){ updateUI(); updateETFUI(); document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||""; }
 init();
 </script>
 </body>
