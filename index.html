@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v5.4 - Final Calibration</title>
+<title>ChipBot v5.5 - True Unicorn</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,10 +29,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 #content::-webkit-scrollbar{display:none}
 .die-card{background:var(--bg2); border:1px solid var(--bdr); border-left:4px solid var(--muted); border-radius:4px; padding:16px; margin-bottom:12px;}
 .etf-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
-.etf-item{background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:14px; cursor:pointer; transition: all 0.2s;}
+.etf-item{background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:14px; cursor:pointer; transition: all 0.2s; min-height:100px; display:flex; flex-direction:column; justify-content:center;}
 .etf-item:active{transform:scale(0.96); opacity:0.7}
-.etf-title{font-size:11px; font-weight:700; margin-bottom:6px; color:var(--blue); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.etf-rank{font-size:10px; color:var(--gold); font-weight:700; margin-bottom:4px}
+.etf-title{font-size:11px; font-weight:700; margin-bottom:8px; color:var(--blue); line-height:1.4; word-break:keep-all}
+.etf-rank{font-size:10px; color:var(--gold); font-weight:700; margin-bottom:4px; letter-spacing:1px}
 .n-stack{background:var(--bg3); border-left:3px solid var(--blue); padding:12px; margin-bottom:10px; border-radius:0 4px 4px 0}
 .n-corp{font-size:9px; color:var(--blue); font-weight:900; margin-bottom:4px}
 .savebtn{width:100%;padding:16px;background:var(--green-bg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;text-transform:uppercase}
@@ -86,7 +86,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
     <div id="screen-set" class="screen">
       <div class="die-card"><div style="font-size:9px; color:var(--muted)">GEMINI API KEY CONTROL</div><input type="password" id="geminiKey" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff; border:none" placeholder="Enter API Key Here"></div>
       <button class="savebtn" onclick="saveAll()">System Config Save</button>
-      <div style="text-align:center; margin-top:20px; font-size:10px; color:var(--muted)">CHIPBOT v5.4 | HBM ALPHA READY</div>
+      <div style="text-align:center; margin-top:20px; font-size:10px; color:var(--muted)">CHIPBOT v5.5 | HBM ALPHA READY</div>
     </div>
   </div>
 
@@ -101,9 +101,9 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 <script>
 const STOCKS = { samsung: { code:'005930', price: 218000 }, skhynix: { code:'000660', price: 1144000 } };
 
-/* ── [UNICORN & RISE 데이터 완벽 교정] ── */
+/* ── [데이터 교정] 사진 속 종목코드 494220 적용 ── */
 const ETFS = [
-  { name: 'UNICORN SK하이닉스밸류체인액티브', code: '466920', rank: '1위' },
+  { name: 'UNICORN SK하이닉스밸류체인액티브', code: '494220', rank: '1위' },
   { name: 'KODEX 반도체', code: '091160', rank: '2위' },
   { name: 'TIGER 코리아TOP10', code: '292150', rank: '3위' },
   { name: 'KODEX 200', code: '069500', rank: '4위' },
@@ -120,7 +120,7 @@ function updateETFUI() {
     <div class="etf-item" onclick="openNaver('${e.code}')">
       <div class="etf-rank">${e.rank}</div>
       <div class="etf-title">${e.name}</div>
-      <div style="font-size:10px; color:var(--muted); margin-top:6px">실시간 시세 확인 ↗</div>
+      <div style="font-size:10px; color:var(--muted); margin-top:auto">실시간 시세 ↗</div>
     </div>
   `).join('');
 }
@@ -128,10 +128,10 @@ function updateETFUI() {
 async function loadDailyNews() {
   const list = document.getElementById('news-list');
   const k = localStorage.getItem('gemini_key');
-  if(!k) { list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--red);">[SYS] 탭에서 API 키를 먼저 입력해주세요.</div>`; return; }
+  if(!k) { list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--red);">[SYS] 탭에서 API 키를 입력해주세요.</div>`; return; }
   
-  list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted)">최신 뉴스를 분석 중입니다...</div>`;
-  const prompt = `삼성전자 뉴스 5개, SK하이닉스 뉴스 5개를 요약해줘. JSON: [{"corp":"SEC|HYX", "title":"제목", "sum":"내용"}]`;
+  list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted)">뉴스를 분석 중입니다...</div>`;
+  const prompt = `삼성전자 뉴스 5개, 하이닉스 뉴스 5개를 요약해줘. JSON: [{"corp":"SEC|HYX", "title":"제목", "sum":"내용"}]`;
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -146,13 +146,13 @@ async function loadDailyNews() {
         <div style="font-size:11px; color:var(--muted); line-height:1.4">${n.sum}</div>
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = `<div style="padding:20px; color:var(--red);">API 키 권한 오류 혹은 연결 실패.</div>`; }
+  } catch(e) { list.innerHTML = `<div style="padding:20px; color:var(--red);">API 키 오류 혹은 연결 실패.</div>`; }
 }
 
 async function runAI() {
   const k = localStorage.getItem('gemini_key');
   if(!k) return;
-  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000입니다. UNICORN 하이닉스 밸류체인 ETF와 RISE 채권혼합을 포함하여 포트폴리오를 짧게 분석해줘.`;
+  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000입니다. 1위인 UNICORN SK하이닉스밸류체인액티브 ETF를 포함해 포트폴리오를 짧게 분석해줘.`;
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -167,7 +167,7 @@ async function sendChat() {
   const i = document.getElementById('chat-input'), m = i.value; if(!m) return;
   addMsg('user', m); i.value = '';
   const k = localStorage.getItem('gemini_key');
-  if(!k) { addMsg('ai', "API 키가 없습니다. [SYS] 탭에서 설정해주세요."); return; }
+  if(!k) { addMsg('ai', "[SYS] 탭에서 API 키를 입력해주세요."); return; }
   try {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -187,7 +187,7 @@ function switchTab(i,b){
   if(i==='news') loadDailyNews();
 }
 function updateUI(){ document.getElementById('hPrice').textContent=`₩${STOCKS[cur].price.toLocaleString()}`; }
-function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('System Calibrated & Saved.'); }
+function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('System Saved Successfully.'); }
 function init(){ updateUI(); updateETFUI(); document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||""; }
 init();
 </script>
