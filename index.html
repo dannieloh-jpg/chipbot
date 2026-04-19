@@ -1044,6 +1044,30 @@ async function runKOSPIAI() {
 function getGeminiKey() { return localStorage.getItem('gemini_key')||''; }
 function getAnthropicKey() { return localStorage.getItem('anthropic_key')||''; }
 
+/* ─ 강건한 JSON 배열 추출기 ─ */
+function extractJSONArray(raw) {
+  if (!raw) return null;
+  // Step 1: 마크다운 코드블록 제거
+  let text = raw.replace(/^```json\s*/im,'').replace(/^```\s*/im,'').replace(/\s*```$/m,'').trim();
+  // Step 2: 직접 파싱
+  try { const p=JSON.parse(text); if(Array.isArray(p)&&p.length)return p; if(p&&typeof p==='object')return[p]; } catch(_){}
+  // Step 3: 배열 구간 탐색
+  let depth=0,start=-1;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='['){if(depth===0)start=i;depth++;}
+    else if(c===']'){depth--;if(depth===0&&start!==-1){try{const p=JSON.parse(text.slice(start,i+1));if(Array.isArray(p)&&p.length)return p;}catch(_){}}}
+  }
+  // Step 4: 개별 객체 수집
+  const items=[];
+  for(const m of text.matchAll(/\{(?:[^{}]|\{[^{}]*\})*\}/g)){try{items.push(JSON.parse(m[0]));}catch(_){}}
+  if(items.length)return items;
+  // Step 5: 줄 단위 파싱
+  const lines2=[];
+  for(const line of text.split('\n')){const l=line.trim().replace(/^[-*]\s*/,'');if(l.startsWith('{')&&l.endsWith('}')){try{lines2.push(JSON.parse(l));}catch(_){}}}
+  return lines2.length?lines2:null;
+}
+
 /* ─ Gemini 모델 자동 감지 ─ */
 let _geminiModelCache = null; // { model, key, ts }
 
@@ -1182,26 +1206,88 @@ async function runPortfolioAI() {
    NEWS
 ═══════════════════════════════════════════ */
 async function loadDailyNews() {
-  if(!getGeminiKey()){toast('SYS 탭에서 API 키를 입력해주세요','r');return;}
-  const list=document.getElementById('news-list'), btn=document.getElementById('newsFetchBtn');
-  btn.disabled=true; btn.textContent='SCANNING...';
-  list.innerHTML='<div class="news-loading"><div class="spin"></div>AI가 최신 뉴스를 스캔하고 있습니다...</div>';
-  const prompt='삼성전자와 SK하이닉스의 최신 투자 뉴스 각 5개씩 총 10개를 요약해주세요.\n오늘: 2026년 4월 20일\n\n'+
-    '반드시 순수 JSON 배열만 답변 (코드블록, 설명 없이):\n'+
-    '[{"corp":"SEC","title":"제목","sum":"2문장 요약","impact":"positive|negative|neutral"}]\n\nSEC=삼성전자, HYX=SK하이닉스';
+  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요', 'r'); return; }
+  const list = document.getElementById('news-list');
+  const btn  = document.getElementById('newsFetchBtn');
+  btn.disabled = true; btn.textContent = 'SCANNING...';
+  list.innerHTML = '<div class="news-loading"><div class="spin"></div>AI가 반도체 뉴스를 스캔하고 있습니다...<br><small style="color:var(--hint)">최초 실행 시 모델 감지로 15~20초 소요될 수 있습니다</small></div>';
+
+  // ── 프롬프트: JSON만 출력하도록 강하게 지시 ──
+  const prompt =
+    '당신은 JSON 생성기입니다. 아래 지시를 반드시 따르세요.\n\n' +
+    '규칙:\n' +
+    '1. 첫 글자는 반드시 [ 이어야 합니다\n' +
+    '2. 마지막 글자는 반드시 ] 이어야 합니다\n' +
+    '3. 마크다운 코드블록(```), 설명 텍스트, 줄바꿈 외 다른 것은 절대 포함하지 마세요\n' +
+    '4. 모든 문자열 값은 큰따옴표로 감싸세요\n\n' +
+    '출력할 JSON 형식 (이 형식 외에 아무것도 출력하지 마세요):\n' +
+    '[{"corp":"SEC","title":"뉴스 제목","sum":"핵심 내용 1~2문장","impact":"positive"},{"corp":"HYX","title":"뉴스 제목","sum":"핵심 내용 1~2문장","impact":"negative"}]\n\n' +
+    'impact 값은 반드시 positive, negative, neutral 중 하나입니다.\n' +
+    'corp 값은 반드시 SEC(삼성전자) 또는 HYX(SK하이닉스) 중 하나입니다.\n\n' +
+    '삼성전자(SEC) 투자 관련 최신 뉴스 5개, SK하이닉스(HYX) 투자 관련 최신 뉴스 5개, 총 10개를 생성하세요.\n' +
+    '오늘 날짜: 2026년 4월 20일 (주말). 실제 뉴스를 기반으로 작성하세요.';
+
+  let rawResponse = '';
   try {
-    const raw=await callGemini(prompt,2000);
-    const match=raw.match(/\[[\s\S]*\]/);
-    if(!match) throw new Error('JSON 파싱 오류');
-    const news=JSON.parse(match[0]);
-    if(!Array.isArray(news)||!news.length) throw new Error('뉴스 데이터 없음');
-    newsCache=news; renderNews(); toast('뉴스 '+news.length+'건 수신','g');
+    rawResponse = await callGemini(prompt, 2500);
+
+    // ── 강건한 파싱 ──
+    const news = extractJSONArray(rawResponse);
+
+    if (!news || !news.length) {
+      // 파싱 실패 시 디버그 패널 표시
+      list.innerHTML =
+        '<div class="news-err">' +
+        '❌ JSON 파싱 실패<br><br>' +
+        '<div style="font-size:9px;text-align:left;color:var(--muted);margin-top:8px">' +
+        '<b style="color:var(--gold)">AI 원본 응답 (처음 300자):</b><br>' +
+        '<pre style="white-space:pre-wrap;font-size:9px;color:var(--hint);margin-top:4px">' +
+        (rawResponse||'(응답 없음)').slice(0, 300).replace(/</g,'&lt;').replace(/>/g,'&gt;') +
+        '</pre>' +
+        '</div>' +
+        '<br>→ SCAN 버튼을 다시 누르거나<br>→ SYS 탭에서 모델을 재감지해 주세요' +
+        '</div>';
+      toast('JSON 파싱 실패 — 재시도해주세요', 'r');
+      btn.disabled = false; btn.textContent = '↻ SCAN';
+      return;
+    }
+
+    // ── 정규화 (필드가 없는 경우 기본값 처리) ──
+    const normalized = news.map((n, i) => ({
+      corp:   (n.corp || (i < 5 ? 'SEC' : 'HYX')).toUpperCase().includes('HYX') ? 'HYX' :
+              (n.corp || '').toUpperCase().includes('SEC') ? 'SEC' :
+              (i < 5 ? 'SEC' : 'HYX'),
+      title:  n.title  || n.headline || n.subject || '(제목 없음)',
+      sum:    n.sum    || n.summary  || n.content  || n.body || '(요약 없음)',
+      impact: ['positive','negative','neutral'].includes((n.impact||'').toLowerCase())
+              ? n.impact.toLowerCase() : 'neutral'
+    })).filter(n => n.title !== '(제목 없음)' || n.sum !== '(요약 없음)');
+
+    if (!normalized.length) throw new Error('유효한 뉴스 항목 없음');
+
+    newsCache = normalized;
+    renderNews();
+    toast('뉴스 ' + normalized.length + '건 수신 완료 ✅', 'g');
+
   } catch(e) {
-    list.innerHTML='<div class="news-err">❌ '+e.message+'<br><br>• API 키 확인<br>• 잠시 후 재시도</div>';
-    toast('뉴스 수신 실패','r');
+    list.innerHTML =
+      '<div class="news-err">' +
+      '❌ ' + e.message + '<br><br>' +
+      '<div style="font-size:9px;text-align:left;color:var(--muted)">' +
+      (rawResponse ? '<b style="color:var(--gold)">AI 응답 미리보기:</b><br>' +
+        '<pre style="white-space:pre-wrap;font-size:8px;color:var(--hint);margin-top:4px">' +
+        rawResponse.slice(0, 200).replace(/</g,'&lt;') + '...</pre>' : '') +
+      '</div><br>' +
+      '• SYS 탭 → 모델 테스트 버튼으로 API 상태 확인<br>' +
+      '• 잠시 후 SCAN 재시도' +
+      '</div>';
+    toast('뉴스 수신 실패: ' + e.message.slice(0, 40), 'r');
   }
-  btn.disabled=false; btn.textContent='↻ SCAN';
+
+  btn.disabled = false; btn.textContent = '↻ SCAN';
 }
+
+
 function filterNews(f,btn){
   newsFilter=f;
   document.querySelectorAll('.nf-btn').forEach(b=>b.classList.remove('act'));
@@ -1211,14 +1297,23 @@ function renderNews(){
   const list=document.getElementById('news-list');
   if(!newsCache.length){list.innerHTML='<div class="news-loading">SCAN 버튼으로 뉴스를 불러오세요.</div>';return;}
   const filtered=newsFilter==='all'?newsCache:newsCache.filter(n=>n.corp===newsFilter);
+  if(!filtered.length){
+    list.innerHTML='<div class="news-loading" style="color:var(--hint)">해당 필터에 뉴스가 없습니다.<br>ALL 또는 다른 탭을 선택해 주세요.</div>';
+    return;
+  }
   list.innerHTML=filtered.map((n,i)=>{
-    const ic=n.impact==='positive'?'imp-pos':n.impact==='negative'?'imp-neg':'imp-neu';
-    const il=n.impact==='positive'?'호재':n.impact==='negative'?'악재':'중립';
-    const cc=n.corp==='SEC'?'corp-sec':'corp-hyx';
+    const impact=(n.impact||'neutral').toLowerCase();
+    const ic=impact==='positive'?'imp-pos':impact==='negative'?'imp-neg':'imp-neu';
+    const il=impact==='positive'?'📈 호재':impact==='negative'?'📉 악재':'➡ 중립';
+    const corp=(n.corp||'SEC').toUpperCase();
+    const cc=corp==='HYX'?'corp-hyx':'corp-sec';
+    const corpLabel=corp==='HYX'?'SK하이닉스 · HYX':'삼성전자 · SEC';
+    const safeTitle=(n.title||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const safeSum=(n.sum||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return '<div class="n-stack '+cc+'">'+
-      '<div class="n-corp">'+(n.corp==='SEC'?'삼성전자 · SEC':'SK하이닉스 · HYX')+' · '+(i+1)+'</div>'+
-      '<div class="n-title">'+(n.title||'')+'</div>'+
-      '<div class="n-sum">'+(n.sum||'')+'</div>'+
+      '<div class="n-corp">'+corpLabel+' · '+(i+1)+'</div>'+
+      '<div class="n-title">'+safeTitle+'</div>'+
+      '<div class="n-sum">'+safeSum+'</div>'+
       '<span class="n-impact '+ic+'">'+il+'</span></div>';
   }).join('');
 }
