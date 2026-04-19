@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v3.4 - Gemini Edition</title>
+<title>ChipBot v3.7 Pro</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,286 +16,221 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0b0d10;--bg2:#13161b;--bg3:#1a1e25;--bg4:#21262f;
+  --bg:#0b0d10;--bg2:#13161b;--bg3:#1a1e25;
   --bdr:rgba(255,255,255,.07);--bdr2:rgba(255,255,255,.13);
   --txt:#dddbd6;--muted:#6b6966;--hint:#3a3836;
   --green:#4ade80;--green-bg:rgba(74,222,128,.07);--green-bd:#166534;
-  --red:#f87171;--red-bg:rgba(248,113,113,.07);--red-bd:#991b1b;
-  --blue:#60a5fa;--amber:#fbbf24;--purple:#a78bfa;
+  --red:#f87171;--blue:#60a5fa;--amber:#fbbf24;
   --font:'JetBrains Mono','Courier New',monospace;
-  --r:8px;--rl:12px;
+  --r:10px;--rl:14px;
 }
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px;overflow:hidden; -webkit-user-select:none; user-select:none;}
 #app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto; background:var(--bg)}
 
+/* Header */
 #hdr{padding:16px 16px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0; padding-top:calc(16px + env(safe-area-inset-top))}
-.hdr-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.logo{font-size:11px;color:var(--muted);letter-spacing:.08em}
-.stabs{display:flex;gap:4px;margin-left:auto}
-.stab{padding:5px 12px;border:1px solid var(--bdr2);border-radius:var(--r);font-size:11px;color:var(--muted);background:transparent;cursor:pointer}
+.stabs{display:flex;gap:6px;margin-bottom:10px}
+.stab{padding:6px 14px;border:1px solid var(--bdr2);border-radius:var(--r);font-size:11px;color:var(--muted);background:transparent;cursor:pointer}
 .stab.act{border-color:var(--green);color:var(--green);background:var(--green-bg)}
-.h-price{font-size:28px;font-weight:700;letter-spacing:-.02em}
+.h-price{font-size:34px;font-weight:700;letter-spacing:-.03em}
+.h-meta{font-size:11px;color:var(--muted);margin-top:4px}
 
-#content{flex:1;overflow-y:auto;padding:12px 16px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
+/* Content Area */
+#content{flex:1;overflow-y:auto;padding:16px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
 #content::-webkit-scrollbar{display:none}
 
-/* 채팅 UI */
-#chat-wrap{display:flex;flex-direction:column;height:100%}
-#chat-logs{flex:1;overflow-y:auto;margin-bottom:12px;padding-right:4px}
-.msg{margin-bottom:10px;max-width:85%;padding:10px;border-radius:var(--r);font-size:12px;line-height:1.5}
+/* Metrics & Charts */
+.mc{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.ml{font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em}
+.mv{font-size:22px;font-weight:700}
+
+/* Chat UI */
+#chat-logs{height:300px;overflow-y:auto;margin-bottom:12px;padding:12px;background:var(--bg3);border-radius:var(--r);display:flex;flex-direction:column}
+.msg{margin-bottom:12px;max-width:85%;padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.6;word-break:break-all}
 .msg.ai{background:var(--bg2);color:var(--txt);align-self:flex-start;border:1px solid var(--bdr)}
-.msg.user{background:var(--green-bg);color:var(--green);align-self:flex-end;margin-left:auto;border:1px solid var(--green-bd)}
-#chat-input-area{display:flex;gap:8px;background:var(--bg2);padding:8px;border-radius:var(--rl);border:1px solid var(--bdr)}
-#chat-input{flex:1;background:transparent;border:none;color:var(--txt);font-family:var(--font);outline:none;font-size:12px}
+.msg.user{background:var(--green-bg);color:var(--green);align-self:flex-end;border:1px solid var(--green-bd)}
+#chat-input-area{display:flex;gap:10px;background:var(--bg2);padding:10px;border-radius:12px;border:1px solid var(--bdr)}
+#chat-input{flex:1;background:transparent;border:none;color:#fff;outline:none;font-family:var(--font);font-size:13px}
 
-.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.mc{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:12px}
-.ml{font-size:10px;color:var(--muted);margin-bottom:4px}
-.mv{font-size:20px;font-weight:700}
+/* Buttons */
+.savebtn{width:100%;padding:15px;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);color:var(--green);font-weight:700;font-size:14px;margin-top:10px}
+.apii{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);color:#fff;padding:14px;margin-top:10px;outline:none}
 
-.aisec{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px;margin-bottom:12px}
-.btn{padding:8px 16px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);font-size:11px;font-family:var(--font);color:var(--txt);cursor:pointer}
-.btn-g{border-color:var(--green);color:var(--green);background:var(--green-bg)}
-
-.apii{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);font-family:var(--font);font-size:12px;color:var(--txt);padding:10px 12px;outline:none;margin-top:8px}
-.savebtn{display:block;width:100%;padding:12px;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);font-family:var(--font);font-size:13px;color:var(--green);font-weight:700;margin-top:12px}
-
+/* Tabbar */
 #tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom)}
-.tb{flex:1;padding:14px 8px;text-align:center;font-size:11px;color:var(--muted);border:none;background:transparent}
+.tb{flex:1;padding:18px 8px;text-align:center;font-size:11px;color:var(--muted);border:none;background:transparent}
 .tb.act{color:var(--green);border-top:2px solid var(--green);margin-top:-1px}
 
 .screen{display:none; height:100%}.screen.act{display:block}
-#toastwrap{position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:calc(100% - 32px);z-index:9999}
-.toast{background:var(--bg3);border-left:4px solid var(--blue);padding:12px;font-size:12px;margin-bottom:8px;border-radius:4px;opacity:0;transition:0.3s}
-.toast.show{opacity:1}
 </style>
 </head>
 <body>
-<div id="toastwrap"></div>
 <div id="app">
   <div id="hdr">
-    <div class="hdr-top">
-      <span class="logo">◈ CHIPBOT v3.4 (Gemini Inside)</span>
-      <div class="stabs">
-        <button class="stab act" onclick="switchStock('samsung',this)">삼성전자</button>
-        <button class="stab" onclick="switchStock('skhynix',this)">SK하이닉스</button>
-      </div>
+    <div class="stabs">
+      <button class="stab act" onclick="switchStock('samsung',this)">삼성전자</button>
+      <button class="stab" onclick="switchStock('skhynix',this)">SK하이닉스</button>
     </div>
     <div id="hPrice" class="h-price">₩-</div>
+    <div id="hMeta" class="h-meta">-</div>
   </div>
 
   <div id="content">
     <div id="screen-trade" class="screen act">
-      <div class="mg">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
         <div class="mc"><div class="ml">Wilder's RSI</div><div class="mv" id="rsiV">-</div></div>
-        <div class="mc"><div class="ml">포트폴리오</div><div class="mv" id="pfVal" style="font-size:16px">₩10,000,000</div></div>
+        <div class="mc"><div class="ml">24h 변동</div><div class="mv" id="hChg">-</div></div>
       </div>
-      <div class="mc" style="margin-bottom:12px">
-        <div style="height:180px"><canvas id="pc"></canvas></div>
-      </div>
-      <div class="aisec">
-        <button class="btn btn-g" style="width:100%" onclick="runAI()">Gemini 분석 및 노션 기록 ↗</button>
-        <div id="aiRep" style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:8px">Gemini가 차트를 분석하고 기록합니다.</div>
-      </div>
+      <div class="mc"><div class="ml">Recent Price Action</div><div style="height:200px"><canvas id="pc"></canvas></div></div>
+      <button class="savebtn" onclick="runAI()">Gemini 분석 및 노션 기록 ↗</button>
+      <div id="aiRep" style="margin-top:14px; font-size:11px; color:var(--muted); line-height:1.7; padding:0 4px"></div>
     </div>
 
     <div id="screen-chat" class="screen">
-      <div id="chat-wrap">
-        <div id="chat-logs">
-          <div class="msg ai">안녕하세요 로지님! 저(Gemini)와 직접 대화를 나눠보세요. 현재 시장에 대해 무엇이든 물어보세요!</div>
-        </div>
-        <div id="chat-input-area">
-          <input type="text" id="chat-input" placeholder="Gemini에게 질문하기..." onkeypress="if(event.keyCode==13) sendChat()">
-          <button onclick="sendChat()" style="background:none; border:none; color:var(--green); font-weight:700">전송</button>
-        </div>
+      <div id="chat-logs">
+        <div class="msg ai">반가워요 로지님! 최신 종가 정보를 반영했습니다. 궁금하신 점을 물어보세요!</div>
+      </div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Gemini에게 질문하기..." onkeypress="if(event.keyCode==13) sendChat()">
+        <button onclick="sendChat()" style="color:var(--green);background:none;border:none;font-weight:700;padding:0 5px">전송</button>
       </div>
     </div>
 
     <div id="screen-set" class="screen">
-      <div class="mc" style="margin-bottom:16px">
-        <div class="ml">GOOGLE GEMINI API KEY</div>
-        <input class="apii" type="password" id="geminiKey" placeholder="AI Studio에서 받은 키를 입력하세요">
-      </div>
-      <div class="mc">
-        <div class="ml">NOTION 연동</div>
-        <input class="apii" type="password" id="notionKey" placeholder="내 통합 토큰">
-        <input class="apii" type="text" id="notionDbId" placeholder="데이터베이스 ID">
-        <button class="savebtn" onclick="saveAllSettings()">설정 저장</button>
-      </div>
-      <div style="padding:15px; font-size:10px; color:var(--hint); line-height:1.6">
-        * API 키는 Google AI Studio(aistudio.google.com)에서 무료로 발급받을 수 있습니다.
-      </div>
+      <div class="mc"><div class="ml">GOOGLE GEMINI API KEY</div><input class="apii" type="password" id="geminiKey"></div>
+      <div class="mc"><div class="ml">NOTION API SETTINGS</div><input class="apii" type="password" id="notionKey" placeholder="Secret Key"><input class="apii" type="text" id="notionDbId" placeholder="Database ID"></div>
+      <button class="savebtn" onclick="saveAll()">모든 설정 저장</button>
+      <div style="text-align:center; padding:20px; font-size:10px; color:var(--hint)">v3.7 Price Update Applied</div>
     </div>
   </div>
 
   <div id="tabbar">
-    <button class="tb act" onclick="switchTab('trade',this)">지표</button>
-    <button class="tb" onclick="switchTab('chat',this)">AI 채팅</button>
-    <button class="tb" onclick="switchTab('set',this)">설정</button>
+    <button class="tb act" onclick="switchTab('trade',this)">TRADE</button>
+    <button class="tb" onclick="switchTab('chat',this)">AI CHAT</button>
+    <button class="tb" onclick="switchTab('set',this)">SETTINGS</button>
   </div>
 </div>
 
 <script>
+/* ── [반영] 최신 종가 데이터 업데이트 ── */
 const STOCKS = {
-  samsung: { name:'삼성전자', ticker:'005930.KS', lastClose:77000 },
-  skhynix: { name:'SK하이닉스', ticker:'000660.KS', lastClose:182000 }
+  samsung: { 
+    name:'삼성전자', lastClose: 218000, prevClose: 216000 
+  },
+  skhynix: { 
+    name:'SK하이닉스', lastClose: 1144000, prevClose: 1128000 
+  }
 };
 let cur = 'samsung', pH = {samsung:[], skhynix:[]}, pChart;
 
-function calcRSI(prices, n = 14) {
-  if (prices.length < n + 1) return 50;
-  let gains = [], losses = [];
-  for (let i = 1; i < prices.length; i++) {
-    const d = prices[i] - prices[i-1];
-    gains.push(d > 0 ? d : 0); losses.push(d < 0 ? -d : 0);
+function calcRSI(p, n=14){
+  if(p.length<n+1) return 50;
+  let g=[], l=[];
+  for(let i=1;i<p.length;i++){
+    const d=p[i]-p[i-1]; g.push(d>0?d:0); l.push(d<0?-d:0);
   }
-  let avgG = gains.slice(0, n).reduce((a, b) => a + b) / n;
-  let avgL = losses.slice(0, n).reduce((a, b) => a + b) / n;
-  for (let i = n; i < gains.length; i++) {
-    avgG = (avgG * (n - 1) + gains[i]) / n;
-    avgL = (avgL * (n - 1) + losses[i]) / n;
+  let ag=g.slice(0,n).reduce((a,b)=>a+b)/n, al=l.slice(0,n).reduce((a,b)=>a+b)/n;
+  for(let i=n;i<g.length;i++){
+    ag=(ag*(n-1)+g[i])/n; al=(al*(n-1)+l[i])/n;
   }
-  return avgL === 0 ? 100 : parseFloat((100 - (100 / (1 + avgG/avgL))).toFixed(1));
+  return al===0?100:parseFloat((100-(100/(1+ag/al))).toFixed(1));
 }
 
-/* ── [핵심] Gemini API 호출 함수 ── */
-async function callGemini(prompt) {
-  const apiKey = localStorage.getItem('gemini_key');
-  if(!apiKey) return "설정 탭에서 Google Gemini API 키를 입력해주세요.";
+async function callGemini(p){
+  const k=localStorage.getItem('gemini_key');
+  if(!k) return "설정에서 API 키를 먼저 입력해주세요.";
+  try {
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:p}]}]})
+    });
+    const d=await r.json(); return d.candidates[0].content.parts[0].text;
+  } catch(e){ return "연결 실패"; }
+}
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+async function sendChat(){
+  const i=document.getElementById('chat-input'), m=i.value;
+  if(!m) return;
+  addMsg('user', m); i.value='';
+  const res=await callGemini(`로지님의 다정한 비서 Gemini입니다. 종목:${STOCKS[cur].name}, 최신가:${STOCKS[cur].lastClose.toLocaleString()}원, 질문:${m}`);
+  addMsg('ai', res);
+}
+
+function addMsg(t,s){
+  const l=document.getElementById('chat-logs'), d=document.createElement('div');
+  d.className=`msg ${t}`; d.textContent=s; l.appendChild(d); l.scrollTop=l.scrollHeight;
+}
+
+async function runAI(){
+  const s = STOCKS[cur];
+  const r = calcRSI(pH[cur]);
+  const prompt = `${s.name} 최신 종가 ₩${s.lastClose.toLocaleString()} 기준 투자 전략을 100자 이내로 분석해줘.`;
+  const report = await callGemini(prompt);
+  document.getElementById('aiRep').textContent = report;
+  sendToNotion(s.name, s.lastClose, r, report);
+}
+
+async function sendToNotion(n,p,r,s){
+  const k=localStorage.getItem('notion_key'), d=localStorage.getItem('notion_db_id');
+  if(!k||!d) return;
+  try {
+    await fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.notion.com/v1/pages"),{
+      method:'POST',headers:{'Authorization':`Bearer ${k}`,'Content-Type':'application/json','Notion-Version':'2022-06-28'},
+      body:JSON.stringify({parent:{database_id:d},properties:{"종목명":{title:[{text:{content:n}}]},"가격":{number:p},"수익률":{rich_text:[{text:{content:`RSI:${r}`}}]},"기록시간":{date:{start:new Date().toISOString()}}}})
+    });
+  } catch(e){}
+}
+
+function saveAll(){
+  localStorage.setItem('gemini_key',document.getElementById('geminiKey').value);
+  localStorage.setItem('notion_key',document.getElementById('notionKey').value);
+  localStorage.setItem('notion_db_id',document.getElementById('notionDbId').value);
+  alert('설정이 저장되었습니다!');
+}
+
+function updateUI(){
+  const s = STOCKS[cur];
+  const diff = s.lastClose - s.prevClose;
+  const pct = ((diff / s.prevClose) * 100).toFixed(2);
   
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+  document.getElementById('hPrice').textContent=`₩${s.lastClose.toLocaleString()}`;
+  document.getElementById('hChg').textContent = `${diff >= 0 ? '+' : ''}${diff.toLocaleString()} (${pct}%)`;
+  document.getElementById('hChg').style.color = diff >= 0 ? 'var(--red)' : 'var(--blue)';
+  document.getElementById('rsiV').textContent = calcRSI(pH[cur]);
+
+  if(!pChart){
+    pChart=new Chart(document.getElementById('pc'),{
+      type:'line', data:{labels:pH[cur].map((_,i)=>i),datasets:[{data:pH[cur],borderColor:'#f87171',borderWidth:2,pointRadius:0}]},
+      options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,0.05)'}}}}
     });
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text;
-  } catch (e) {
-    return "Gemini와 연결하는 중 오류가 발생했습니다. API 키를 확인해 주세요.";
-  }
+  } else { pChart.data.datasets[0].data=pH[cur]; pChart.update(); }
 }
 
-async function sendChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if(!msg) return;
-
-  addMessage('user', msg);
-  input.value = '';
-
-  const rsi = calcRSI(pH[cur]);
-  const price = pH[cur].at(-1);
-
-  const prompt = `당신은 반도체 전문 트레이딩 비서 'Gemini'입니다. 사용자 '로지님'에게 친절하고 위트있게 답변하세요. 
-  현재 종목: ${STOCKS[cur].name}, 가격: ₩${price.toLocaleString()}, RSI: ${rsi}. 
-  이 상황을 참고해서 사용자의 질문에 답하세요: "${msg}"`;
-
-  const response = await callGemini(prompt);
-  addMessage('ai', response);
+function switchStock(k,b){
+  document.querySelectorAll('.stab').forEach(s=>s.classList.remove('act'));
+  b.classList.add('act'); cur=k; updateUI();
 }
 
-function addMessage(type, text) {
-  const logs = document.getElementById('chat-logs');
-  const div = document.createElement('div');
-  div.className = `msg ${type}`;
-  div.textContent = text;
-  logs.appendChild(div);
-  logs.scrollTop = logs.scrollHeight;
-}
-
-async function runAI() {
-  const rsi = calcRSI(pH[cur]);
-  const action = rsi < 35 ? "매수 구간" : rsi > 65 ? "매도 구간" : "중립";
-  const price = pH[cur].at(-1);
-
-  const prompt = `${STOCKS[cur].name}의 현재 가격은 ₩${price.toLocaleString()}, Wilder's RSI는 ${rsi}입니다. 
-  이 지표를 바탕으로 현재 투자 전략을 100자 이내로 요약해 주세요.`;
-
-  const summary = await callGemini(prompt);
-  document.getElementById('aiRep').textContent = summary;
-
-  sendToNotion({ name: STOCKS[cur].name, action: action, price: price, pnl: `RSI: ${rsi} | ${summary.substring(0, 20)}...` });
-}
-
-async function sendToNotion(tradeData) {
-  const key = localStorage.getItem('notion_key'), dbId = localStorage.getItem('notion_db_id');
-  if (!key || !dbId) return;
-  const proxy = "https://corsproxy.io/?", url = "https://api.notion.com/v1/pages";
-  try {
-    await fetch(proxy + encodeURIComponent(url), {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28' },
-      body: JSON.stringify({
-        parent: { database_id: dbId }, properties: {
-          "종목명": { title: [{ text: { content: tradeData.name } }] },
-          "구분": { select: { name: tradeData.action } },
-          "가격": { number: tradeData.price },
-          "수익률": { rich_text: [{ text: { content: tradeData.pnl || "-" } }] },
-          "기록시간": { date: { start: new Date().toISOString() } }
-        }
-      })
-    });
-    toast('노션 동기화 완료');
-  } catch (e) {}
-}
-
-function saveAllSettings() {
-  localStorage.setItem('gemini_key', document.getElementById('geminiKey').value);
-  localStorage.setItem('notion_key', document.getElementById('notionKey').value);
-  localStorage.setItem('notion_db_id', document.getElementById('notionDbId').value);
-  toast('설정이 저장되었습니다.');
-}
-
-function toast(m) {
-  const w = document.getElementById('toastwrap'), d = document.createElement('div');
-  d.className = `toast show`; d.textContent = m;
-  w.appendChild(d); setTimeout(() => d.remove(), 2500);
-}
-
-function updateUI() {
-  const prices = pH[cur], c = prices[prices.length-1];
-  const rsi = calcRSI(prices);
-  document.getElementById('hPrice').textContent = `₩${c.toLocaleString()}`;
-  document.getElementById('rsiV').textContent = rsi;
-  if (!pChart) {
-    const ctx = document.getElementById('pc').getContext('2d');
-    pChart = new Chart(ctx, {
-      type: 'line',
-      data: { labels: prices.map((_,i)=>i), datasets: [{ data: prices, borderColor: '#f87171', borderWidth: 2, pointRadius: 0, tension: 0.2 }] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
-    });
-  } else { pChart.data.datasets[0].data = prices; pChart.update(); }
-}
-
-function switchStock(k, b) {
-  document.querySelectorAll('.stab').forEach(s=>s.classList.remove('act')); b.classList.add('act');
-  cur = k; if(pChart) { pChart.destroy(); pChart = null; }
-  updateUI();
-}
-
-function switchTab(id, b) {
+function switchTab(i,b){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act'));
   document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act'));
-  document.getElementById('screen-'+id).classList.add('act'); b.classList.add('act');
+  document.getElementById('screen-'+i).classList.add('act'); b.classList.add('act');
 }
 
-function init() {
-  ['samsung', 'skhynix'].forEach(k => {
-    let p = STOCKS[k].lastClose;
-    for(let i=0; i<60; i++) { p += (Math.random()-0.5)*1500; pH[k].push(Math.round(p)); }
+function init(){
+  ['samsung','skhynix'].forEach(k=>{
+    let v = STOCKS[k].prevClose;
+    for(let i=0;i<30;i++){
+      v+=(Math.random()-0.5)*(k==='samsung'?1000:5000); pH[k].push(Math.round(v));
+    }
+    pH[k][pH[k].length-1] = STOCKS[k].lastClose;
   });
   updateUI();
-  document.getElementById('geminiKey').value = localStorage.getItem('gemini_key') || "";
-  document.getElementById('notionKey').value = localStorage.getItem('notion_key') || "";
-  document.getElementById('notionDbId').value = localStorage.getItem('notion_db_id') || "";
+  document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||"";
+  document.getElementById('notionKey').value=localStorage.getItem('notion_key')||"";
+  document.getElementById('notionDbId').value=localStorage.getItem('notion_db_id')||"";
 }
 init();
 </script>
 </body>
 </html>
-
