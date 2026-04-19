@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v4.0 - HBM Die Edition</title>
+<title>ChipBot v4.1 - HBM Die Edition PRO</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,6 +23,7 @@
   --bdr-neon:rgba(74,222,128,.3);
   --txt:#dddbd6;
   --muted:#6b6966;
+  --hint:#3a3836;
   --green:#4ade80; /* 전도성 그린 */
   --green-bg:rgba(74,222,128,.08);
   --red:#f87171;
@@ -42,17 +43,31 @@ body::before {
 
 #app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto; background:rgba(11,13,16,0.95); backdrop-filter:blur(10px)}
 
-/* HBM 스택 헤더 */
+/* [신규] 스플래시 화면 스타일 */
+#splash {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--bg); color: var(--txt);
+  display: flex; flex-direction: column; justify-content: center; align-items:center;
+  z-index: 10000; transition: opacity 0.8s, visibility 0.8s;
+}
+#splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+#splash-img-wrap { width: 80%; height: 80%; position: relative; }
+#splash-img { width: 100%; height: 100%; object-fit: contain; }
+#splash-loader { margin-top: 20px; font-size: 14px; font-weight: 700; color: var(--green); font-family: var(--mono); animation: blink 1s infinite; }
+
+/* 메인 앱 스타일 (HBM Die Edition 유지) */
+#main-app { display: flex; flex-direction: column; height: 100%; opacity: 0; transition: opacity 0.8s; }
+#main-app.visible { opacity: 1; }
+
 #hdr{padding:20px 16px 12px; border-bottom:1px solid var(--bdr); flex-shrink:0; padding-top:calc(20px + env(safe-area-inset-top))}
 .stabs{display:flex;gap:8px;margin-bottom:12px}
 .stab{padding:6px 16px;border:1px solid var(--bdr);border-radius:4px;font-size:11px;font-weight:600;color:var(--muted);background:var(--bg2);cursor:pointer;transition:0.2s;text-transform:uppercase;letter-spacing:1px}
-.stab.act{border-color:var(--green);color:var(--green);box-shadow:0 0 10px var(--green-bg)}
+.stab.act{border-color:var(--green);color:var(--green);background:var(--green-bg);box-shadow:0 0 10px var(--green-bg)}
 
 .h-price-wrap{display:flex; align-items:baseline; gap:10px}
 .h-price{font-size:36px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono)}
 .h-chg{font-size:14px;font-weight:600}
 
-/* HBM Die 모듈형 콘텐츠 */
 #content{flex:1;overflow-y:auto;padding:16px; scrollbar-width:none;}
 #content::-webkit-scrollbar{display:none}
 
@@ -65,13 +80,12 @@ body::before {
 .die-label{font-size:9px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
 .die-val{font-size:24px;font-weight:700;font-family:var(--mono)}
 
-/* 뉴스 스택 스타일 */
 .n-stack{background:var(--bg3);border:1px solid var(--bdr);border-radius:4px;padding:12px;margin-bottom:10px; border-right:2px solid var(--bdr)}
 .n-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:2px;margin-bottom:6px;display:inline-block}
 .tag-pos{background:var(--green-bg);color:var(--green);border:1px solid var(--green)}
+.tag-neu{background:var(--bg3);color:var(--muted);border:1px solid var(--bdr2)}
 .n-title{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:4px}
 
-/* 채팅 인터페이스 */
 #chat-logs{height:350px;overflow-y:auto;margin-bottom:12px;padding:12px;display:flex;flex-direction:column;gap:12px}
 .msg{max-width:85%;padding:12px;border-radius:4px;font-size:12px;line-height:1.6;position:relative}
 .msg.ai{background:var(--bg2);color:var(--txt);align-self:flex-start;border:1px solid var(--bdr)}
@@ -80,7 +94,6 @@ body::before {
 #chat-input-area{display:flex;gap:10px;background:var(--bg2);padding:12px;border-radius:4px;border:1px solid var(--bdr)}
 #chat-input{flex:1;background:transparent;border:none;color:#fff;outline:none;font-size:13px;font-family:var(--mono)}
 
-/* 하단 내비게이션 (Bus Interface) */
 #tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom)}
 .tb{flex:1;padding:18px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:none;background:transparent;letter-spacing:0.05em}
 .tb.act{color:var(--green);background:linear-gradient(to top, var(--green-bg), transparent)}
@@ -89,67 +102,80 @@ body::before {
 .apii{width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:4px;color:#fff;padding:14px;margin-top:10px;outline:none;font-family:var(--mono)}
 
 .screen{display:none; height:100%}.screen.act{display:block}
+
+/* 애니메이션 */
+@keyframes blink { 50% { opacity: 0; } }
 </style>
 </head>
 <body>
 
+<div id="splash">
+  <div id="splash-img-wrap">
+    <img id="splash-img" src="https://image-api.notion.so/v1/proxy?url=https%3A%2F%2Fnotion-proxy.s3.amazonaws.com%2Ff504936d-176f-409e-b834-4b531a74d284%2FHBM_Chip_Visualization_Rosie.png" alt="HBM 스택 비주얼">
+  </div>
+  <div style="font-size:18px; font-weight:700; letter-spacing:0.2em; font-family:var(--mono); color:#fff; text-shadow:0 0 10px rgba(74,222,128,0.5)">CHIPBOT</div>
+  <div id="splash-loader">>_ INITIALIZING DATA BUS...</div>
+</div>
+
 <div id="app">
-  <div id="hdr">
-    <div class="stabs">
-      <button class="stab act" onclick="switchStock('samsung',this)">Die 0: SEC</button>
-      <button class="stab" onclick="switchStock('skhynix',this)">Die 1: HYX</button>
-    </div>
-    <div class="h-price-wrap">
-      <span id="hPrice" class="h-price">₩-</span>
-      <span id="hChg" class="h-chg">-%</span>
-    </div>
-  </div>
-
-  <div id="content">
-    <div id="screen-trade" class="screen act">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
-        <div class="die-card active-node"><div class="die-label">Wilder's RSI</div><div class="die-val" id="rsiV">-</div></div>
-        <div class="die-card"><div class="die-label">Signal Node</div><div class="die-val" id="sigNode" style="font-size:14px; color:var(--blue)">STANDBY</div></div>
+  <div id="main-app">
+    <div id="hdr">
+      <div class="stabs">
+        <button class="stab act" onclick="switchStock('samsung',this)">Die 0: SEC</button>
+        <button class="stab" onclick="switchStock('skhynix',this)">Die 1: HYX</button>
       </div>
-      <div class="die-card"><div class="die-label">Stack Monitoring (30D)</div><div style="height:180px"><canvas id="pc"></canvas></div></div>
-      <button class="savebtn" onclick="runAI()">Execute Gemini Analysis ↗</button>
-      <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.7; border-left:1px solid var(--bdr); padding-left:12px"></div>
-    </div>
-
-    <div id="screen-news" class="screen">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
-        <span style="font-weight:700; letter-spacing:0.1em">DATA BUS: NEWS</span>
-        <button onclick="loadDailyNews()" style="font-size:10px; color:var(--blue); background:none; border:none; font-family:var(--mono)">REFRESH</button>
-      </div>
-      <div id="news-list"></div>
-    </div>
-
-    <div id="screen-chat" class="screen">
-      <div id="chat-logs"></div>
-      <div id="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Enter signal request..." onkeypress="if(event.keyCode==13) sendChat()">
-        <button onclick="sendChat()" style="color:var(--green);background:none;border:none;font-weight:700">SEND</button>
+      <div class="h-price-wrap">
+        <span id="hPrice" class="h-price">₩-</span>
+        <span id="hChg" class="h-chg">-%</span>
       </div>
     </div>
 
-    <div id="screen-set" class="screen">
-      <div class="die-card"><div class="die-label">Gemini API Controller</div><input class="apii" type="password" id="geminiKey"></div>
-      <div class="die-card"><div class="die-label">Notion Integration</div><input class="apii" type="password" id="notionKey" placeholder="Secret Key"><input class="apii" type="text" id="notionDbId" placeholder="Database ID" style="margin-top:8px"></div>
-      <button class="savebtn" onclick="saveAll()">Flash Memory Save</button>
-      <div style="text-align:center; padding:30px; font-size:10px; color:var(--muted); font-family:var(--mono)">CHIPBOT v4.0 PRO | HBM DIE EDITION</div>
-    </div>
-  </div>
+    <div id="content">
+      <div id="screen-trade" class="screen act">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
+          <div class="die-card active-node"><div class="die-label">Wilder's RSI</div><div class="die-val" id="rsiV">-</div></div>
+          <div class="die-card"><div class="die-label">Signal Node</div><div class="die-val" id="sigNode" style="font-size:14px; color:var(--blue)">STANDBY</div></div>
+        </div>
+        <div class="die-card"><div class="die-label">Stack Monitoring (30D)</div><div style="height:180px"><canvas id="pc"></canvas></div></div>
+        <button class="savebtn" onclick="runAI()">Execute Gemini Analysis ↗</button>
+        <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.7; border-left:1px solid var(--bdr); padding-left:12px"></div>
+      </div>
 
-  <div id="tabbar">
-    <button class="tb act" onclick="switchTab('trade',this)">CORE</button>
-    <button class="tb" onclick="switchTab('news',this)">NEWS</button>
-    <button class="tb" onclick="switchTab('chat',this)">CHAT</button>
-    <button class="tb" onclick="switchTab('set',this)">SYS</button>
+      <div id="screen-news" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+          <span style="font-weight:700; letter-spacing:0.1em">DATA BUS: NEWS</span>
+          <button onclick="loadDailyNews()" style="font-size:10px; color:var(--blue); background:none; border:none; font-family:var(--mono)">REFRESH</button>
+        </div>
+        <div id="news-list"></div>
+      </div>
+
+      <div id="screen-chat" class="screen">
+        <div id="chat-logs"></div>
+        <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Enter signal request..." onkeypress="if(event.keyCode==13) sendChat()">
+          <button onclick="sendChat()" style="color:var(--green);background:none;border:none;font-weight:700">SEND</button>
+        </div>
+      </div>
+
+      <div id="screen-set" class="screen">
+        <div class="die-card"><div class="die-label">Gemini API Controller</div><input class="apii" type="password" id="geminiKey"></div>
+        <div class="die-card"><div class="die-label">Notion Integration</div><input class="apii" type="password" id="notionKey" placeholder="Secret Key"><input class="apii" type="text" id="notionDbId" placeholder="Database ID" style="margin-top:8px"></div>
+        <button class="savebtn" onclick="saveAll()">Flash Memory Save</button>
+        <div style="text-align:center; padding:30px; font-size:10px; color:var(--muted); font-family:var(--mono)">CHIPBOT v4.1 PRO | HBM DIE EDITION</div>
+      </div>
+    </div>
+
+    <div id="tabbar">
+      <button class="tb act" onclick="switchTab('trade',this)">CORE</button>
+      <button class="tb" onclick="switchTab('news',this)">NEWS</button>
+      <button class="tb" onclick="switchTab('chat',this)">CHAT</button>
+      <button class="tb" onclick="switchTab('set',this)">SYS</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* ── [로지님을 위한 최신 종가 데이터] ── */
+/* ── [반영] 최신 종가 데이터 업데이트 ── */
 const STOCKS = {
   samsung: { name:'삼성전자', lastClose: 218000, prevClose: 216000 },
   skhynix: { name:'SK하이닉스', lastClose: 1144000, prevClose: 1128000 }
@@ -161,4 +187,117 @@ function calcRSI(p, n=14){
   if(p.length < n+1) return 50;
   let g=[], l=[]; for(let i=1;i<p.length;i++){ const d=p[i]-p[i-1]; g.push(d>0?d:0); l.push(d<0?-d:0); }
   let ag=g.slice(0,n).reduce((a,b)=>a+b)/n, al=l.slice(0,n).reduce((a,b)=>a+b)/n;
-  for(let i=n;i<g.length;i++){ ag=(ag*(n-1)+g[i])/n; al
+  for(let i=n;i<g.length;i++){ ag=(ag*(n-1)+g[i])/n; al=(al*(n-1)+l[i])/n; }
+  return al===0?100:parseFloat((100-(100/(1+ag/al))).toFixed(1));
+}
+
+async function callGemini(p){
+  const k=localStorage.getItem('gemini_key'); if(!k) return "SYSTEM: API KEY NOT FOUND";
+  try {
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:p}]}]})
+    });
+    const d=await r.json(); return d.candidates[0].content.parts[0].text;
+  } catch(e){ return "LINK FAILURE"; }
+}
+
+/* ── [반영] SK하이닉스 특화 뉴스 로직 ── */
+async function loadDailyNews() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); font-family:var(--mono)">SCANNING DATA BUS...</div>`;
+  
+  let hbmFocus = (cur === 'skhynix') ? "HBM3E, Nvidia supply chain, and TSMC collaboration." : "Memory market share and semiconductor policy.";
+  const prompt = `Search and summarize the top 10 most critical news for ${STOCKS[cur].name} stock as of today. Focus on ${hbmFocus} Respond ONLY in JSON: [{"title":"Title", "sum":"Summary", "impact":"positive|negative|neutral"}]`;
+  
+  const res = await callGemini(prompt);
+  try {
+    const jsonStr = res.match(/\[.*\]/s)[0];
+    const news = JSON.parse(jsonStr);
+    list.innerHTML = news.map(n => `
+      <div class="n-stack">
+        <span class="n-tag ${n.impact === 'positive' ? 'tag-pos' : 'tag-neu'}">${n.impact.toUpperCase()}</span>
+        <div class="n-title">${n.title}</div>
+        <div style="font-size:11px; color:var(--muted); line-height:1.5">${n.sum}</div>
+      </div>
+    `).join('');
+  } catch(e) { list.innerHTML = `<div style="padding:20px; color:var(--red)">PARSING ERROR</div>`; }
+}
+
+async function sendChat(){
+  const i=document.getElementById('chat-input'), m=i.value; if(!m) return;
+  addMsg('user', m); i.value='';
+  const res=await callGemini(`로지님을 위한 HBM 에디션 비서 Gemini입니다. 종목:${STOCKS[cur].name}, 가격:${STOCKS[cur].lastClose.toLocaleString()}, 질문:${m}`);
+  addMsg('ai', res);
+}
+
+function addMsg(t,s){ const l=document.getElementById('chat-logs'), d=document.createElement('div'); d.className=`msg ${t}`; d.textContent=s; l.appendChild(d); l.scrollTop=l.scrollHeight; }
+
+async function runAI(){
+  const s = STOCKS[cur], r = calcRSI(pH[cur]);
+  const res = await callGemini(`${s.name} 가격:${s.lastClose}, RSI:${r} 투자 전략 리포트를 로지님에게 브리핑해줘.`);
+  document.getElementById('aiRep').textContent = res;
+  sendToNotion(s.name, s.lastClose, r, res);
+}
+
+/* ── [반영] Notion Sync ── */
+async function sendToNotion(n,p,r,s){
+  const k=localStorage.getItem('notion_key'), d=localStorage.getItem('notion_db_id'); if(!k||!d) return;
+  try { await fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.notion.com/v1/pages"),{
+    method:'POST',headers:{'Authorization':`Bearer ${k}`,'Content-Type':'application/json','Notion-Version':'2022-06-28'},
+    body:JSON.stringify({parent:{database_id:d},properties:{"종목명":{title:[{text:{content:n}}]},"가격":{number:p},"수익률":{rich_text:[{text:{content:`RSI:${r}`}}]},"기록시간":{date:{start:new Date().toISOString()}}}})
+  }); } catch(e){}
+}
+
+function saveAll(){
+  localStorage.setItem('gemini_key',document.getElementById('geminiKey').value);
+  localStorage.setItem('notion_key',document.getElementById('notionKey').value);
+  localStorage.setItem('notion_db_id',document.getElementById('notionDbId').value);
+  alert('SYSTEM UPDATED');
+}
+
+function updateUI(){
+  const s = STOCKS[cur]; document.getElementById('hPrice').textContent=`₩${s.lastClose.toLocaleString()}`;
+  const diff = s.lastClose - s.prevClose;
+  document.getElementById('hChg').textContent = `${((diff/s.prevClose)*100).toFixed(2)}%`;
+  document.getElementById('hChg').style.color = diff >= 0 ? 'var(--red)' : 'var(--blue)';
+  
+  const rsi = calcRSI(pH[cur]);
+  document.getElementById('rsiV').textContent = rsi;
+  document.getElementById('sigNode').textContent = rsi < 35 ? "BUY SIGNAL" : rsi > 65 ? "SELL SIGNAL" : "HOLD";
+  document.getElementById('sigNode').style.color = rsi < 35 ? 'var(--green)' : rsi > 65 ? 'var(--red)' : 'var(--blue)';
+
+  if(!pChart){
+    pChart=new Chart(document.getElementById('pc'),{ type:'line', data:{labels:pH[cur].map((_,i)=>i),datasets:[{data:pH[cur],borderColor:'#4ade80',borderWidth:2,pointRadius:0}]}, options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,0.03)'}}}});
+  } else { pChart.data.datasets[0].data=pH[cur]; pChart.update(); }
+}
+
+function switchStock(k,b){ document.querySelectorAll('.stab').forEach(s=>s.classList.remove('act')); b.classList.add('act'); cur=k; updateUI(); }
+function switchTab(i,b){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act')); document.getElementById('screen-'+i).classList.add('act'); b.classList.add('act'); if(i==='news') loadDailyNews(); }
+
+/* ── [반영] 스플래시 화면 제어 로직 ── */
+function init(){
+  // 데이터 시딩
+  ['samsung','skhynix'].forEach(k=>{
+    let v = STOCKS[k].prevClose; for(let i=0;i<30;i++){ v+=(Math.random()-0.5)*(k==='samsung'?1000:5000); pH[k].push(Math.round(v)); }
+    pH[k][pH[k].length-1] = STOCKS[k].lastClose;
+  });
+  
+  // UI 초기화
+  updateUI();
+  document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||"";
+  document.getElementById('notionKey').value=localStorage.getItem('notion_key')||"";
+  document.getElementById('notionDbId').value=localStorage.getItem('notion_db_id')||"";
+  
+  // 스플래시 화면 제어: 3초 후 메인 앱 표시
+  const splash = document.getElementById('splash');
+  const mainApp = document.getElementById('main-app');
+  setTimeout(() => {
+    splash.classList.add('hidden');
+    mainApp.classList.add('visible');
+  }, 3000);
+}
+init();
+</script>
+</body>
+</html>
