@@ -4,90 +4,304 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ChipBot v5.6 - Robust AI</title>
-
+<meta name="theme-color" content="#0b0d10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-title" content="ChipBot">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0b0d10; --bg2:#13161b; --bg3:#1a1e25;
-  --bdr:rgba(255,255,255,.08); --txt:#dddbd6; --muted:#6b6966;
-  --green:#4ade80; --green-bg:rgba(74,222,128,.1);
-  --red:#f87171; --blue:#60a5fa; --gold:#fbbf24;
-  --font:'Inter', sans-serif; --mono:'JetBrains Mono', monospace;
+  --bg:#0b0d10;--bg2:#13161b;--bg3:#1a1e25;--bg4:#21262f;
+  --bdr:rgba(255,255,255,.08);--bdr2:rgba(255,255,255,.15);
+  --txt:#dddbd6;--muted:#6b6966;--hint:#3a3836;
+  --green:#4ade80;--gbg:rgba(74,222,128,.1);--gbd:rgba(74,222,128,.25);
+  --red:#f87171;--rbg:rgba(248,113,113,.1);
+  --blue:#60a5fa;--bbg:rgba(96,165,250,.1);
+  --gold:#fbbf24;--purple:#a78bfa;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);overflow:hidden;}
-#app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto; background:rgba(11,13,16,0.98); backdrop-filter:blur(15px)}
-#hdr{padding:20px 16px 12px; border-bottom:1px solid var(--bdr); padding-top:calc(20px + env(safe-area-inset-top))}
-.stabs{display:flex;gap:6px;margin-bottom:12px; overflow-x:auto; scrollbar-width:none;}
-.stab{padding:6px 16px; border:1px solid var(--bdr); border-radius:4px; font-size:11px; font-weight:600; color:var(--muted); background:var(--bg2); cursor:pointer; white-space:nowrap;}
-.stab.act{border-color:var(--green); color:var(--green); background:var(--green-bg)}
-.h-price{font-size:36px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono); cursor:pointer}
-#content{flex:1;overflow-y:auto;padding:16px; scrollbar-width:none;}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto;background:var(--bg)}
+
+/* ── Header ── */
+#hdr{padding:calc(20px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.stabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.stabs::-webkit-scrollbar{display:none}
+.stab{padding:5px 14px;border:1px solid var(--bdr2);border-radius:4px;font-size:11px;font-weight:700;color:var(--muted);background:var(--bg2);cursor:pointer;white-space:nowrap;letter-spacing:.04em;font-family:var(--mono)}
+.stab.act{border-color:var(--green);color:var(--green);background:var(--gbg)}
+.price-block{cursor:pointer}
+.price-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:4px}
+.h-price{font-size:34px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono);display:flex;align-items:baseline;gap:10px}
+.h-chg{font-size:13px;font-weight:600}
+.h-chg.up{color:var(--red)}.h-chg.dn{color:var(--blue)}
+.h-sub{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.03em}
+
+/* ── Market bar ── */
+#mktbar{display:flex;align-items:center;gap:8px;padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;font-size:10px;font-family:var(--mono)}
+.mb{padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.06em}
+.mb-o{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}
+.mb-c{background:var(--bg4);color:var(--muted);border:1px solid var(--bdr)}
+#mktInfo{flex:1;color:var(--muted);font-size:10px}
+.cnt-badge{background:var(--bg4);border:1px solid var(--bdr);border-radius:3px;padding:2px 8px;color:var(--gold);font-weight:700;font-size:10px}
+
+/* ── Content ── */
+#content{flex:1;overflow-y:auto;padding:14px 16px;scrollbar-width:none}
 #content::-webkit-scrollbar{display:none}
-.die-card{background:var(--bg2); border:1px solid var(--bdr); border-left:4px solid var(--muted); border-radius:4px; padding:16px; margin-bottom:12px;}
-.etf-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
-.etf-item{background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:14px; cursor:pointer; transition: all 0.2s; min-height:100px; display:flex; flex-direction:column; justify-content:center;}
-.etf-item:active{transform:scale(0.96); opacity:0.7}
-.etf-title{font-size:11px; font-weight:700; margin-bottom:8px; color:var(--blue); line-height:1.4; word-break:keep-all}
-.etf-rank{font-size:10px; color:var(--gold); font-weight:700; margin-bottom:4px; letter-spacing:1px}
-.n-stack{background:var(--bg3); border-left:3px solid var(--blue); padding:12px; margin-bottom:10px; border-radius:0 4px 4px 0}
-.n-corp{font-size:9px; color:var(--blue); font-weight:900; margin-bottom:4px}
-.savebtn{width:100%;padding:16px;background:var(--green-bg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;text-transform:uppercase}
-#tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom)}
-.tb{flex:1;padding:18px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:none;background:transparent;}
-.tb.act{color:var(--green); background:rgba(74,222,128,0.05)}
-.screen{display:none; height:100%}.screen.act{display:block}
+
+/* ── Tabbar ── */
+#tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0}
+.tb{flex:1;padding:14px 4px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);border:none;background:transparent;cursor:pointer;letter-spacing:.08em;font-family:var(--mono);transition:.15s}
+.tb.act{color:var(--green);background:var(--gbg);border-top:1px solid var(--green);margin-top:-1px}
+
+/* ── Screen ── */
+.screen{display:none}.screen.act{display:block}
+
+/* ── Countdown ── */
+.cd-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:12px 14px;margin-bottom:12px;text-align:center;display:none}
+.cd-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:5px}
+.cd-time{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--txt);letter-spacing:.04em}
+.cd-sub{font-size:9px;color:var(--hint);margin-top:3px}
+
+/* ── CORE tab ── */
+.algo-card{background:var(--bg2);border:1px solid var(--bdr);border-left:4px solid var(--gold);border-radius:4px;padding:14px;margin-bottom:12px}
+.algo-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:6px}
+.algo-val{font-size:14px;font-weight:700;color:var(--gold);font-family:var(--mono);line-height:1.4}
+
+.section-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:10px}
+
+.etf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.etf-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:13px 12px;cursor:pointer;transition:.15s;position:relative;overflow:hidden;min-height:110px;display:flex;flex-direction:column}
+.etf-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.etf-item:active{opacity:.75;transform:scale(.98)}
+.r1::before{background:var(--gold)}.r2::before{background:var(--purple)}.r3::before{background:var(--blue)}.r4::before{background:var(--green)}.r5::before{background:var(--muted)}
+.etf-rank{font-size:9px;font-weight:700;letter-spacing:.08em;margin-bottom:5px;font-family:var(--mono)}
+.r1 .etf-rank{color:var(--gold)}.r2 .etf-rank{color:var(--purple)}.r3 .etf-rank{color:var(--blue)}.r4 .etf-rank{color:var(--green)}.r5 .etf-rank{color:var(--muted)}
+.etf-name{font-size:11px;font-weight:700;line-height:1.4;word-break:keep-all;color:var(--txt);margin-bottom:5px;flex:1}
+.etf-code{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px}
+.etf-wbar{height:4px;border-radius:2px;overflow:hidden;display:flex;gap:1px;margin-bottom:4px}
+.etf-wbar .ws{height:100%;border-radius:1px}
+.etf-wlabels{font-size:8px;color:var(--muted);display:flex;gap:6px;margin-bottom:6px}
+.etf-link{font-size:9px;color:var(--hint);font-family:var(--mono);margin-top:auto}
+
+.run-btn{width:100%;padding:14px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;letter-spacing:.1em;font-family:var(--mono);font-size:11px;margin-bottom:12px;transition:.15s}
+.run-btn:hover{background:rgba(74,222,128,.18)}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.ai-rep-wrap{display:none;margin-bottom:14px}
+.ai-rep-label{font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px;font-family:var(--mono)}
+#aiRep{font-size:11px;color:var(--muted);line-height:1.8;border-left:2px solid var(--bg4);padding-left:14px}
+
+/* ── NEWS tab ── */
+.news-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.news-scan-btn{padding:6px 14px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin-left:auto}
+.news-scan-btn:disabled{opacity:.4;cursor:not-allowed}
+
+.news-filter{display:flex;gap:6px;margin-bottom:12px}
+.nf-btn{padding:4px 12px;border:1px solid var(--bdr2);border-radius:3px;font-size:10px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;font-family:var(--mono);letter-spacing:.06em;transition:.15s}
+.nf-btn.act{border-color:var(--blue);color:var(--blue);background:var(--bbg)}
+
+.news-loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:11px;line-height:1.8}
+.spin{width:18px;height:18px;border:2px solid var(--bdr2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.n-stack{background:var(--bg2);border-left:3px solid var(--blue);padding:12px 14px;margin-bottom:10px;border-radius:0 4px 4px 0}
+.n-stack.corp-sec{border-left-color:var(--blue)}
+.n-stack.corp-hyx{border-left-color:var(--purple)}
+.n-corp{font-size:9px;font-weight:900;letter-spacing:.12em;margin-bottom:5px;font-family:var(--mono)}
+.corp-sec .n-corp{color:var(--blue)}.corp-hyx .n-corp{color:var(--purple)}
+.n-title{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--txt);line-height:1.4}
+.n-sum{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px}
+.n-impact{display:inline-block;font-size:8px;font-weight:700;padding:2px 7px;border-radius:2px;font-family:var(--mono)}
+.imp-pos{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.imp-neg{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.imp-neu{background:var(--bg4);color:var(--muted);border:1px solid var(--bdr)}
+
+.news-err{padding:20px;color:var(--red);font-size:11px;text-align:center;line-height:1.9;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:4px}
+
+/* ── CHAT tab ── */
+#chat-logs{max-height:340px;overflow-y:auto;margin-bottom:12px;scrollbar-width:none;padding-right:2px}
+#chat-logs::-webkit-scrollbar{display:none}
+.msg-user{background:var(--gbg);color:var(--green);border:1px solid var(--gbd);padding:10px 13px;border-radius:4px;margin-bottom:10px;font-size:12px;line-height:1.6;text-align:right}
+.msg-ai{background:var(--bg2);border:1px solid var(--bdr);padding:10px 13px;border-radius:4px;margin-bottom:10px;font-size:12px;line-height:1.7;color:var(--txt)}
+.chat-input-wrap{display:flex;gap:8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:10px 13px;margin-bottom:8px}
+#chat-input{flex:1;background:transparent;border:none;color:var(--txt);outline:none;font-size:12px;font-family:var(--font)}
+#chat-input::placeholder{color:var(--hint)}
+.chat-send{color:var(--green);background:none;border:none;font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.06em;white-space:nowrap}
+#chatStatus{font-size:10px;color:var(--muted);text-align:center;padding:6px;font-family:var(--mono);letter-spacing:.06em}
+
+.ai-engine{display:flex;gap:6px;margin-bottom:12px}
+.eng-btn{flex:1;padding:6px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;font-size:9px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--mono);letter-spacing:.06em}
+.eng-btn.act{border-color:var(--purple);color:var(--purple);background:rgba(167,139,250,.1)}
+
+/* ── SYS tab ── */
+.sys-card{background:var(--bg2);border:1px solid var(--bdr);border-left:4px solid var(--muted);border-radius:4px;padding:14px;margin-bottom:12px}
+.sys-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:8px}
+.sys-input{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt);padding:10px 12px;font-size:12px;font-family:var(--mono);outline:none;margin-bottom:8px}
+.sys-input:focus{border-color:var(--green)}
+.sys-hint{font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:10px}
+.sys-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr)}
+.sys-row:last-child{border:none}
+.sys-row-label{font-size:11px;color:var(--txt);flex:1}
+.sys-row-sub{font-size:9px;color:var(--muted);display:block;margin-top:1px}
+.sys-row-val{font-size:11px;color:var(--txt);font-family:var(--mono)}
+.save-g{width:100%;padding:13px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-bottom:0}
+.save-b{width:100%;padding:13px;background:var(--bbg);border:1px solid var(--blue);border-radius:4px;color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-bottom:0}
+
+.ver{text-align:center;margin-top:20px;font-size:10px;color:var(--hint);font-family:var(--mono);letter-spacing:.08em;padding-bottom:8px}
+
+/* ── Toast ── */
+#toastwrap{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:480px;display:flex;flex-direction:column;gap:5px;z-index:999;pointer-events:none}
+.toast-el{background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;padding:8px 13px;font-size:10px;pointer-events:all;opacity:0;transform:translateY(-5px);transition:.2s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);color:var(--txt)}
+.toast-el.show{opacity:1;transform:translateY(0)}
+.t-g{border-left:3px solid var(--green)}.t-r{border-left:3px solid var(--red)}.t-b{border-left:3px solid var(--blue)}
 </style>
 </head>
 <body>
 
+<div id="toastwrap"></div>
+
 <div id="app">
+
+  <!-- ── Header ── -->
   <div id="hdr">
     <div class="stabs">
-      <button class="stab act" onclick="switchStock('samsung',this)">SEC (005930)</button>
-      <button class="stab" onclick="switchStock('skhynix',this)">HYX (000660)</button>
+      <button class="stab act" onclick="switchStock('samsung',this)">SEC · 005930</button>
+      <button class="stab" onclick="switchStock('skhynix',this)">HYX · 000660</button>
     </div>
-    <div onclick="openNaver(STOCKS[cur].code)">
-      <div style="font-size:10px; color:var(--muted); letter-spacing:1px">REAL-TIME PRICE (NAVER) ↗</div>
-      <span id="hPrice" class="h-price">₩-</span>
+    <div class="price-block" onclick="openNaver(STOCKS[cur].code)" title="네이버 증권 실시간 시세로 이동">
+      <div class="price-label">REAL-TIME PRICE (NAVER) ↗</div>
+      <div class="h-price">
+        <span id="hPrice">₩-</span>
+        <span class="h-chg" id="hChg"></span>
+      </div>
+      <div class="h-sub" id="hSub">-</div>
     </div>
   </div>
 
+  <!-- ── Market bar ── -->
+  <div id="mktbar">
+    <span class="mb" id="mktBadge">-</span>
+    <span id="mktInfo">-</span>
+    <span class="cnt-badge" id="cdBadge">-</span>
+    <span id="mktClock" style="color:var(--hint);margin-left:auto;font-size:9px;font-family:var(--mono)">-</span>
+  </div>
+
+  <!-- ── Content ── -->
   <div id="content">
+
+    <!-- CORE -->
     <div id="screen-trade" class="screen act">
-      <div class="die-card">
-        <div style="font-size:9px;color:var(--muted);letter-spacing:1px">ALGO PREDICTION</div>
-        <div style="font-size:16px; font-weight:700; color:var(--gold)">1st: UNICORN SK HYX Value Chain</div>
+      <div class="cd-box" id="cdBox">
+        <div class="cd-label">NEXT MARKET OPEN</div>
+        <div class="cd-time" id="cdTime">--:--:--</div>
+        <div class="cd-sub" id="cdSub">-</div>
       </div>
-      <div style="font-size:9px; color:var(--muted); margin-bottom:10px; font-weight:700; letter-spacing:1px">PORTFOLIO (TOUCH FOR LIVE DATA)</div>
+
+      <div class="algo-card">
+        <div class="algo-label">ALGO PREDICTION · AI RANKING</div>
+        <div class="algo-val">🥇 UNICORN SK하이닉스밸류체인액티브</div>
+      </div>
+
+      <div class="section-label">PORTFOLIO · 반도체 ETF TOP 5 &nbsp;(터치 → 네이버 실시간)</div>
       <div id="etf-list" class="etf-grid"></div>
-      <button class="savebtn" onclick="runAI()">Gemini Portfolio Analysis ↗</button>
-      <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.7; border-left:2px solid var(--bg3); padding-left:14px"></div>
-    </div>
 
-    <div id="screen-news" class="screen">
-      <div style="font-weight:700; margin-bottom:15px; letter-spacing:1px">TOP 10 SEMI NEWS (5+5)</div>
-      <div id="news-list"></div>
-    </div>
+      <button class="run-btn" id="runBtn" onclick="runPortfolioAI()">▶ GEMINI PORTFOLIO ANALYSIS ↗</button>
 
-    <div id="screen-chat" class="screen">
-      <div id="chat-logs" style="height:350px; overflow-y:auto; padding:10px"></div>
-      <div style="display:flex; gap:8px; padding:10px; background:var(--bg2); border-radius:4px">
-        <input type="text" id="chat-input" style="flex:1; background:transparent; border:none; color:#fff; outline:none" placeholder="비서에게 무엇이든 물어보세요." onkeypress="if(event.keyCode==13) sendChat()">
-        <button onclick="sendChat()" style="color:var(--green); background:none; border:none; font-weight:700">SEND</button>
+      <div class="ai-rep-wrap" id="aiRepWrap">
+        <div class="ai-rep-label">AI BRIEF</div>
+        <div id="aiRep"></div>
       </div>
     </div>
 
-    <div id="screen-set" class="screen">
-      <div class="die-card"><div style="font-size:9px; color:var(--muted)">GEMINI API KEY CONTROL</div><input type="password" id="geminiKey" class="savebtn" style="background:var(--bg3); text-align:left; color:#fff; border:none" placeholder="Enter API Key Here"></div>
-      <button class="savebtn" onclick="saveAll()">System Config Save</button>
-      <div style="text-align:center; margin-top:20px; font-size:10px; color:var(--muted)">CHIPBOT v5.6 | ROBUST AI READY</div>
+    <!-- NEWS -->
+    <div id="screen-news" class="screen">
+      <div class="news-hdr">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.06em;font-family:var(--mono)">TOP 10 SEMI NEWS</span>
+        <button class="news-scan-btn" id="newsFetchBtn" onclick="loadDailyNews()">↻ SCAN</button>
+      </div>
+      <div class="news-filter">
+        <button class="nf-btn act" onclick="filterNews('all',this)">ALL</button>
+        <button class="nf-btn" onclick="filterNews('SEC',this)">SEC 삼성전자</button>
+        <button class="nf-btn" onclick="filterNews('HYX',this)">HYX SK하이닉스</button>
+      </div>
+      <div id="news-list">
+        <div class="news-loading">Gemini API 키를 [SYS] 탭에서 입력 후<br>SCAN 버튼을 눌러주세요.</div>
+      </div>
     </div>
-  </div>
 
+    <!-- CHAT -->
+    <div id="screen-chat" class="screen">
+      <div class="ai-engine">
+        <button class="eng-btn act" id="eng-gemini" onclick="setEngine('gemini',this)">GEMINI</button>
+        <button class="eng-btn" id="eng-claude" onclick="setEngine('claude',this)">CLAUDE</button>
+      </div>
+      <div id="chat-logs"></div>
+      <div class="chat-input-wrap">
+        <input type="text" id="chat-input" placeholder="비서에게 무엇이든 물어보세요." onkeypress="if(event.keyCode==13)sendChat()">
+        <button class="chat-send" onclick="sendChat()">SEND ↗</button>
+      </div>
+      <div id="chatStatus">GEMINI AI ASSISTANT · READY</div>
+    </div>
+
+    <!-- SYS -->
+    <div id="screen-set" class="screen">
+      <div class="sys-card">
+        <div class="sys-label">GEMINI API KEY</div>
+        <div class="sys-hint">
+          Google AI Studio(aistudio.google.com)에서 발급한 API 키를 입력하세요.<br>
+          뉴스 스캔·포트폴리오 분석·채팅에 사용됩니다. 이 기기에만 저장됩니다.
+        </div>
+        <input type="password" id="geminiKey" class="sys-input" placeholder="AIza...">
+        <button class="save-g" onclick="saveGemini()">GEMINI KEY SAVE</button>
+      </div>
+
+      <div class="sys-card">
+        <div class="sys-label">ANTHROPIC (CLAUDE) API KEY &nbsp;·&nbsp; 옵션</div>
+        <div class="sys-hint">
+          console.anthropic.com에서 발급한 API 키를 입력하세요.<br>
+          CHAT 탭에서 엔진을 CLAUDE로 전환하면 Claude가 응답합니다.
+        </div>
+        <input type="password" id="anthropicKey" class="sys-input" placeholder="sk-ant-api03-...">
+        <button class="save-b" onclick="saveAnthropic()">ANTHROPIC KEY SAVE</button>
+      </div>
+
+      <div class="sys-card">
+        <div class="sys-label">STOCK REFERENCE DATA · 2026.4.17 종가</div>
+        <div class="sys-row">
+          <span class="sys-row-label">삼성전자<span class="sys-row-sub">005930 · KOSPI</span></span>
+          <span class="sys-row-val">₩216,000</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-row-label">SK하이닉스<span class="sys-row-sub">000660 · KOSPI</span></span>
+          <span class="sys-row-val">₩1,144,000</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-row-label">KRX 장 운영<span class="sys-row-sub">한국 표준시(KST)</span></span>
+          <span class="sys-row-val" style="color:var(--muted)">09:00 ~ 15:30</span>
+        </div>
+        <div class="sys-row">
+          <span class="sys-row-label">실시간 시세<span class="sys-row-sub">각 종목·ETF 터치 시</span></span>
+          <span class="sys-row-val" style="color:var(--blue)">네이버 증권 ↗</span>
+        </div>
+      </div>
+
+      <div class="sys-card">
+        <div class="sys-label">ETF 종목 코드</div>
+        <div class="sys-row"><span class="sys-row-label">UNICORN SK하이닉스VC</span><span class="sys-row-val" style="color:var(--gold)">494220</span></div>
+        <div class="sys-row"><span class="sys-row-label">KODEX 반도체</span><span class="sys-row-val">091160</span></div>
+        <div class="sys-row"><span class="sys-row-label">TIGER 코리아TOP10</span><span class="sys-row-val">292150</span></div>
+        <div class="sys-row"><span class="sys-row-label">KODEX 200</span><span class="sys-row-val">069500</span></div>
+        <div class="sys-row"><span class="sys-row-label">RISE 삼전하닉채권혼합50</span><span class="sys-row-val">480310</span></div>
+      </div>
+
+      <div class="ver">CHIPBOT v5.6 · ROBUST AI READY · 2026.04<br>삼성전자·SK하이닉스 반도체 투자 참고용 앱 · 실제 투자 손실에 대한 책임은 사용자에게 있습니다</div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ── Tabbar ── -->
   <div id="tabbar">
     <button class="tb act" onclick="switchTab('trade',this)">CORE</button>
     <button class="tb" onclick="switchTab('news',this)">NEWS</button>
@@ -97,109 +311,379 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 </div>
 
 <script>
-const STOCKS = { samsung: { code:'005930', price: 218000 }, skhynix: { code:'000660', price: 1144000 } };
+/* ─────────────────────────────────────
+   데이터
+───────────────────────────────────── */
+const STOCKS = {
+  samsung: { name:'삼성전자', code:'005930', price:216000, prev:217500, lastDate:'2026.4.17' },
+  skhynix: { name:'SK하이닉스', code:'000660', price:1144000, prev:1103000, lastDate:'2026.4.17' }
+};
 
-/* [UNICORN 코드 494220 최종 확인 완료] */
 const ETFS = [
-  { name: 'UNICORN SK하이닉스밸류체인액티브', code: '494220', rank: '1위' },
-  { name: 'KODEX 반도체', code: '091160', rank: '2위' },
-  { name: 'TIGER 코리아TOP10', code: '292150', rank: '3위' },
-  { name: 'KODEX 200', code: '069500', rank: '4위' },
-  { name: 'RISE 삼전하닉50혼합', code: '480310', rank: '5위' }
+  { rank:'1st', name:'UNICORN SK하이닉스밸류체인액티브', code:'494220', sW:'5.2%', hW:'35.0%', type:'액티브', cls:'r1' },
+  { rank:'2nd', name:'KODEX 반도체', code:'091160', sW:'20.3%', hW:'19.8%', type:'주식형', cls:'r2' },
+  { rank:'3rd', name:'TIGER 코리아TOP10', code:'292150', sW:'30.1%', hW:'20.3%', type:'주식형', cls:'r3' },
+  { rank:'4th', name:'KODEX 200', code:'069500', sW:'24.2%', hW:'16.4%', type:'주식형', cls:'r4' },
+  { rank:'5th', name:'RISE 삼전하닉채권혼합50', code:'480310', sW:'25.0%', hW:'25.0%', type:'채권혼합', cls:'r5' }
 ];
 
+/* ─────────────────────────────────────
+   상태
+───────────────────────────────────── */
 let cur = 'samsung';
+let newsCache = [];
+let newsFilter = 'all';
+let chatEngine = 'gemini'; // 'gemini' | 'claude'
 
-function openNaver(code) { window.open(`https://m.stock.naver.com/domestic/stock/${code}/total`, '_blank'); }
+/* ─────────────────────────────────────
+   유틸
+───────────────────────────────────── */
+function getKST() { return new Date(new Date().getTime() + 9 * 3600000); }
+function isOpen() {
+  const k = getKST(), d = k.getUTCDay(), t = k.getUTCHours() * 60 + k.getUTCMinutes();
+  return d >= 1 && d <= 5 && t >= 540 && t < 930;
+}
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
+function openNaver(code) { window.open('https://m.stock.naver.com/domestic/stock/' + code + '/total', '_blank'); }
 
+function toast(msg, type = 'b') {
+  const w = document.getElementById('toastwrap');
+  const t = document.createElement('div');
+  t.className = 'toast-el t-' + type;
+  t.textContent = msg;
+  w.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 250); }, 3500);
+}
+
+/* ─────────────────────────────────────
+   마켓 바 & 카운트다운
+───────────────────────────────────── */
+function updateMarketBar() {
+  const open = isOpen(), k = getKST();
+  document.getElementById('mktBadge').textContent = open ? '장 개장' : '장 마감';
+  document.getElementById('mktBadge').className = 'mb ' + (open ? 'mb-o' : 'mb-c');
+  document.getElementById('mktClock').textContent =
+    pad(k.getUTCHours()) + ':' + pad(k.getUTCMinutes()) + ':' + pad(k.getUTCSeconds()) + ' KST';
+
+  const d = k.getUTCDay(), h = k.getUTCHours(), m = k.getUTCMinutes(),
+        s = k.getUTCSeconds(), t = h * 60 + m;
+
+  if (!open) {
+    let mins;
+    if (d === 0) mins = (24 - h) * 60 - m + 9 * 60;
+    else if (d === 6) mins = (24 - h) * 60 - m + 24 * 60 + 9 * 60;
+    else if (t < 540) mins = 540 - t;
+    else { const nd = d === 5 ? 3 : 1; mins = (24 - h) * 60 - m + nd * 24 * 60 + 9 * 60; }
+
+    const tot = mins * 60 - s;
+    const rH = Math.floor(tot / 3600), rM = Math.floor((tot % 3600) / 60), rS = tot % 60;
+    document.getElementById('cdTime').textContent = pad(rH) + ':' + pad(rM) + ':' + pad(rS);
+    document.getElementById('cdSub').textContent = (d === 0 || d === 6 ? '월요일' : '다음 거래일') + ' 09:00 KST 개장 예정';
+    document.getElementById('cdBox').style.display = 'block';
+    document.getElementById('cdBadge').textContent = pad(rH) + ':' + pad(rM);
+    document.getElementById('mktInfo').textContent =
+      d === 0 || d === 6 ? '주말 · 월요일 09:00 개장' : t < 540 ? '개장 전 · 09:00 개장' : '장 마감 · 다음 거래일 09:00 개장';
+  } else {
+    document.getElementById('cdBox').style.display = 'none';
+    const rem = 930 - t;
+    document.getElementById('cdBadge').textContent = Math.floor(rem / 60) + 'h ' + (rem % 60) + 'm left';
+    document.getElementById('mktInfo').textContent =
+      '장 진행 중 · ' + Math.floor(rem / 60) + '시간 ' + (rem % 60) + '분 남음';
+  }
+}
+
+/* ─────────────────────────────────────
+   주가 UI
+───────────────────────────────────── */
+function updateUI() {
+  const s = STOCKS[cur];
+  const chg = s.price - s.prev, pct = (chg / s.prev * 100);
+  document.getElementById('hPrice').textContent = '₩' + fmt(s.price);
+  const hC = document.getElementById('hChg');
+  hC.textContent = (chg > 0 ? '▲' : '▼') + fmt(Math.abs(chg)) + ' (' + (chg >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
+  hC.className = 'h-chg ' + (chg > 0 ? 'up' : 'dn');
+  document.getElementById('hSub').textContent =
+    s.name + ' · ' + s.lastDate + ' 종가 기준 · 터치하면 네이버 증권 실시간으로 이동';
+}
+
+/* ─────────────────────────────────────
+   ETF UI
+───────────────────────────────────── */
 function updateETFUI() {
-  const list = document.getElementById('etf-list');
-  list.innerHTML = ETFS.map(e => `
-    <div class="etf-item" onclick="openNaver('${e.code}')">
+  document.getElementById('etf-list').innerHTML = ETFS.map(e => `
+    <div class="etf-item ${e.cls}" onclick="openNaver('${e.code}')">
       <div class="etf-rank">${e.rank}</div>
-      <div class="etf-title">${e.name}</div>
-      <div style="font-size:10px; color:var(--muted); margin-top:auto">실시간 시세 ↗</div>
+      <div class="etf-name">${e.name}</div>
+      <div class="etf-code">${e.code} · ${e.type}</div>
+      <div class="etf-wbar">
+        <div class="ws" style="width:${parseFloat(e.sW)}%;background:#f87171"></div>
+        <div class="ws" style="width:${parseFloat(e.hW)}%;background:#a78bfa;margin-left:1px"></div>
+        <div class="ws" style="flex:1;background:var(--hint);margin-left:1px"></div>
+      </div>
+      <div class="etf-wlabels">
+        <span style="color:#f87171">삼성 ${e.sW}</span>
+        <span style="color:#a78bfa">하닉 ${e.hW}</span>
+      </div>
+      <div class="etf-link">실시간 시세 ↗</div>
     </div>
   `).join('');
 }
 
-async function loadDailyNews() {
-  const list = document.getElementById('news-list');
-  const k = localStorage.getItem('gemini_key');
-  if(!k) { list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--red);">[SYS] 탭에서 API 키를 입력해주세요.</div>`; return; }
-  
-  list.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted)">AI가 뉴스를 스캔하고 있습니다...</div>`;
-  const prompt = `삼성전자 뉴스 5개, 하이닉스 뉴스 5개를 요약해줘. 대답은 반드시 [ ]로 감싸진 JSON 리스트 형식이어야 해. 예: [{"corp":"SEC", "title":"제목", "sum":"내용"}]`;
-  
+/* ─────────────────────────────────────
+   API 키 관리
+───────────────────────────────────── */
+function getGeminiKey() { return localStorage.getItem('gemini_key') || ''; }
+function getAnthropicKey() { return localStorage.getItem('anthropic_key') || ''; }
+
+function saveGemini() {
+  const k = document.getElementById('geminiKey').value.trim();
+  if (!k) { toast('API 키를 입력해주세요', 'r'); return; }
+  localStorage.setItem('gemini_key', k);
+  toast('Gemini API 키 저장 완료', 'g');
+}
+
+function saveAnthropic() {
+  const k = document.getElementById('anthropicKey').value.trim();
+  if (!k) { toast('API 키를 입력해주세요', 'r'); return; }
+  localStorage.setItem('anthropic_key', k);
+  toast('Anthropic API 키 저장 완료', 'g');
+  updateChatStatus();
+}
+
+/* ─────────────────────────────────────
+   API 호출
+───────────────────────────────────── */
+async function callGemini(prompt, maxTokens) {
+  const k = getGeminiKey();
+  if (!k) throw new Error('Gemini API 키 없음 — [SYS] 탭에서 입력해주세요');
+  const res = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + k,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens || 800 }
+      })
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'HTTP ' + res.status);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function callClaude(prompt) {
+  const k = getAnthropicKey();
+  if (!k) throw new Error('Anthropic API 키 없음 — [SYS] 탭에서 입력해주세요');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': k,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 600,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!res.ok) throw new Error('Anthropic HTTP ' + res.status);
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+/* ─────────────────────────────────────
+   CORE: 포트폴리오 AI
+───────────────────────────────────── */
+async function runPortfolioAI() {
+  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요', 'r'); return; }
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true; btn.textContent = '▶ AI ANALYZING...';
+  const wrap = document.getElementById('aiRepWrap'), rep = document.getElementById('aiRep');
+  wrap.style.display = 'block';
+  rep.textContent = 'Gemini AI가 포트폴리오를 분석하고 있습니다...';
+
+  const etfDesc = ETFS.map(e => e.rank + ': ' + e.name + '(' + e.code + ') 삼성' + e.sW + '/하닉' + e.hW).join('\n');
+  const prompt =
+    '반도체 투자 전문 AI로서 다음 포트폴리오를 분석해주세요.\n\n' +
+    '현재 주가: 삼성전자 ₩216,000, SK하이닉스 ₩1,144,000 (2026.4.17 종가 기준)\n\n' +
+    'ETF 랭킹:\n' + etfDesc + '\n\n' +
+    '다음을 150자 이내 한국어로 간결하게 브리핑해주세요:\n' +
+    '① 현재 시장 상황 ② 1위 ETF 추천 이유 ③ 투자 시 주의사항';
+
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-    });
-    const data = await res.json();
-    
-    // [강화] JSON 추출 로직: 텍스트 중 [ ] 구간만 정확히 찾아냄
-    const rawText = data.candidates[0].content.parts[0].text;
-    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-    if(!jsonMatch) throw new Error("Format Error");
-    
-    const news = JSON.parse(jsonMatch[0]);
-    list.innerHTML = news.map(n => `
-      <div class="n-stack">
-        <div class="n-corp">${n.corp}</div>
-        <div style="font-size:12px; font-weight:700; margin-bottom:4px">${n.title}</div>
-        <div style="font-size:11px; color:var(--muted); line-height:1.4">${n.sum}</div>
-      </div>
-    `).join('');
-  } catch(e) { 
-    list.innerHTML = `<div style="padding:20px; color:var(--red); font-size:11px; text-align:center;">
-      연결 실패 또는 API 키 권한 부족.<br><br>
-      1. API 키가 정확한지 확인<br>
-      2. SYS 탭에서 재입력 후 저장<br>
-      3. 잠시 후 다시 시도
-    </div>`; 
+    rep.textContent = await callGemini(prompt, 400);
+    toast('포트폴리오 AI 분석 완료', 'g');
+  } catch (e) {
+    rep.textContent = '⚠ ' + e.message;
+    toast('분석 실패: ' + e.message, 'r');
+  }
+  btn.disabled = false;
+  btn.textContent = '▶ GEMINI PORTFOLIO ANALYSIS ↗';
+}
+
+/* ─────────────────────────────────────
+   NEWS: 뉴스 로드 & 필터
+───────────────────────────────────── */
+async function loadDailyNews() {
+  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요', 'r'); return; }
+  const list = document.getElementById('news-list'), btn = document.getElementById('newsFetchBtn');
+  btn.disabled = true; btn.textContent = 'SCANNING...';
+  list.innerHTML = '<div class="news-loading"><div class="spin"></div>Gemini AI가 최신 뉴스를 스캔하고 있습니다...</div>';
+
+  const prompt =
+    '삼성전자와 SK하이닉스의 최신 투자 뉴스 각 5개씩 총 10개를 요약해주세요.\n' +
+    '오늘 날짜: 2026년 4월 20일 (주말)\n\n' +
+    '반드시 아래 JSON 배열 형식으로만 답변하세요. 설명이나 코드블록 없이 순수 JSON만:\n' +
+    '[{"corp":"SEC","title":"뉴스 제목","sum":"2문장 핵심 요약","impact":"positive|negative|neutral"},' +
+    '{"corp":"HYX","title":"...","sum":"...","impact":"..."}]\n\n' +
+    'SEC=삼성전자, HYX=SK하이닉스. 투자에 중요한 최신 뉴스를 선별해주세요.';
+
+  try {
+    const raw = await callGemini(prompt, 2000);
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('JSON 포맷 오류 — AI 응답을 파싱할 수 없습니다');
+    const news = JSON.parse(match[0]);
+    if (!Array.isArray(news) || !news.length) throw new Error('뉴스 데이터 없음');
+    newsCache = news;
+    renderNews();
+    toast('뉴스 ' + news.length + '건 수신 완료', 'g');
+  } catch (e) {
+    list.innerHTML =
+      '<div class="news-err">❌ ' + e.message +
+      '<br><br>' +
+      '• API 키가 정확한지 확인해주세요<br>' +
+      '• Gemini 무료 할당량 초과 시 잠시 후 재시도<br>' +
+      '• SYS 탭에서 API 키를 재입력해주세요' +
+      '</div>';
+    toast('뉴스 수신 실패', 'r');
+  }
+  btn.disabled = false;
+  btn.textContent = '↻ SCAN';
+}
+
+function filterNews(f, btn) {
+  newsFilter = f;
+  document.querySelectorAll('.nf-btn').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  renderNews();
+}
+
+function renderNews() {
+  const list = document.getElementById('news-list');
+  if (!newsCache.length) {
+    list.innerHTML = '<div class="news-loading">SCAN 버튼으로 뉴스를 불러오세요.</div>';
+    return;
+  }
+  const filtered = newsFilter === 'all' ? newsCache : newsCache.filter(n => n.corp === newsFilter);
+  list.innerHTML = filtered.map((n, i) => {
+    const ic = n.impact === 'positive' ? 'imp-pos' : n.impact === 'negative' ? 'imp-neg' : 'imp-neu';
+    const il = n.impact === 'positive' ? '호재' : n.impact === 'negative' ? '악재' : '중립';
+    const cc = n.corp === 'SEC' ? 'corp-sec' : 'corp-hyx';
+    const corpLabel = n.corp === 'SEC' ? '삼성전자 · SEC' : 'SK하이닉스 · HYX';
+    return '<div class="n-stack ' + cc + '">' +
+      '<div class="n-corp">' + corpLabel + ' · ' + (i + 1) + '</div>' +
+      '<div class="n-title">' + (n.title || '') + '</div>' +
+      '<div class="n-sum">' + (n.sum || '') + '</div>' +
+      '<span class="n-impact ' + ic + '">' + il + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+/* ─────────────────────────────────────
+   CHAT
+───────────────────────────────────── */
+function setEngine(engine, btn) {
+  chatEngine = engine;
+  document.querySelectorAll('.eng-btn').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  updateChatStatus();
+}
+
+function updateChatStatus() {
+  const el = document.getElementById('chatStatus');
+  if (chatEngine === 'claude') {
+    el.textContent = getAnthropicKey() ? 'CLAUDE AI READY' : 'CLAUDE — SYS 탭에서 Anthropic API 키를 입력해주세요';
+  } else {
+    el.textContent = getGeminiKey() ? 'GEMINI AI READY' : 'GEMINI — SYS 탭에서 API 키를 입력해주세요';
   }
 }
 
-async function runAI() {
-  const k = localStorage.getItem('gemini_key');
-  if(!k) return;
-  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000입니다. 현재 투자 전략을 로지님에게 100자 이내로 브리핑해줘.`;
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-    });
-    const data = await res.json();
-    document.getElementById('aiRep').textContent = data.candidates[0].content.parts[0].text;
-  } catch(e){}
-}
-
 async function sendChat() {
-  const i = document.getElementById('chat-input'), m = i.value; if(!m) return;
-  addMsg('user', m); i.value = '';
-  const k = localStorage.getItem('gemini_key');
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  addMsg('user', msg);
+  document.getElementById('chatStatus').textContent = 'AI THINKING...';
+
+  const systemCtx =
+    '당신은 삼성전자(₩216,000)와 SK하이닉스(₩1,144,000) 주식 투자 전문 AI 비서입니다. ' +
+    '2026년 4월 기준 한국 반도체 시장을 분석하고, 질문에 간결하고 정확하게 한국어로 답변합니다.';
+  const fullPrompt = systemCtx + '\n\n사용자: ' + msg;
+
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:`로지님의 비서입니다. 답변: ${m}`}]}]})
-    });
-    const d = await r.json(); addMsg('ai', d.candidates[0].content.parts[0].text);
-  } catch(e){ addMsg('ai', "연결 실패."); }
+    let reply;
+    if (chatEngine === 'claude') {
+      reply = await callClaude(fullPrompt);
+    } else {
+      reply = await callGemini(fullPrompt, 500);
+    }
+    addMsg('ai', reply);
+  } catch (e) {
+    addMsg('ai', '⚠ ' + e.message);
+  }
+  updateChatStatus();
 }
 
-function addMsg(t,s){ const l=document.getElementById('chat-logs'), d=document.createElement('div'); d.style = t==='ai' ? "background:var(--bg2); padding:12px; border-radius:4px; margin-bottom:12px; font-size:12px; line-height:1.6;" : "background:var(--green-bg); color:var(--green); padding:12px; border-radius:4px; margin-bottom:12px; font-size:12px; align-self:flex-end; border:1px solid var(--green);"; d.textContent=s; l.appendChild(d); l.scrollTop=l.scrollHeight; }
-
-function switchStock(k,b){ document.querySelectorAll('.stab').forEach(s=>s.classList.remove('act')); b.classList.add('act'); cur=k; updateUI(); }
-function switchTab(i,b){ 
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act')); 
-  document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act')); 
-  document.getElementById('screen-'+i).classList.add('act'); b.classList.add('act');
-  if(i==='news') loadDailyNews();
+function addMsg(type, text) {
+  const logs = document.getElementById('chat-logs');
+  const d = document.createElement('div');
+  d.className = type === 'user' ? 'msg-user' : 'msg-ai';
+  d.textContent = text;
+  logs.appendChild(d);
+  logs.scrollTop = logs.scrollHeight;
 }
-function updateUI(){ document.getElementById('hPrice').textContent=`₩${STOCKS[cur].price.toLocaleString()}`; }
-function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('System Saved Successfully.'); }
-function init(){ updateUI(); updateETFUI(); document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||""; }
+
+/* ─────────────────────────────────────
+   네비게이션
+───────────────────────────────────── */
+function switchStock(k, btn) {
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('act'));
+  btn.classList.add('act');
+  cur = k;
+  updateUI();
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('act'));
+  document.querySelectorAll('.tb').forEach(t => t.classList.remove('act'));
+  document.getElementById('screen-' + id).classList.add('act');
+  btn.classList.add('act');
+}
+
+/* ─────────────────────────────────────
+   초기화
+───────────────────────────────────── */
+function init() {
+  updateUI();
+  updateETFUI();
+  updateMarketBar();
+  setInterval(updateMarketBar, 1000);
+
+  const gk = localStorage.getItem('gemini_key') || '';
+  const ak = localStorage.getItem('anthropic_key') || '';
+  if (gk) document.getElementById('geminiKey').value = gk;
+  if (ak) document.getElementById('anthropicKey').value = ak;
+  updateChatStatus();
+}
+
 init();
 </script>
 </body>
