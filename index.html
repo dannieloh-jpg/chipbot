@@ -344,7 +344,8 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
     <div id="screen-set" class="screen">
       <div class="sys-card">
         <div class="sys-label">GEMINI API KEY</div>
-        <div class="sys-hint">Google AI Studio(aistudio.google.com)에서 발급.<br>뉴스·포트폴리오 분석·KOSPI AI 분석에 사용됩니다.<br><br>
+        <div id="detectedModel" style="font-size:10px;color:var(--gold);font-family:var(--mono);margin-bottom:8px;min-height:16px"></div>
+        <div class="sys-hint">Google AI Studio(aistudio.google.com)에서 발급.<br>뉴스·포트폴리오 분석·KOSPI AI 분석에 사용됩니다.<br>모델은 API에서 자동으로 감지합니다.<br><br>
         <strong style="color:var(--gold)">사용 모델 (자동 폴백):</strong><br>
         gemini-2.0-flash → gemini-2.0-flash-lite → gemini-1.5-flash-latest → gemini-1.5-pro-latest<br>
         ※ 모델이 지원되지 않으면 자동으로 다음 모델을 시도합니다.
@@ -1043,54 +1044,106 @@ async function runKOSPIAI() {
 function getGeminiKey() { return localStorage.getItem('gemini_key')||''; }
 function getAnthropicKey() { return localStorage.getItem('anthropic_key')||''; }
 
-async function callGemini(prompt, maxTokens=800) {
-  const k=getGeminiKey();
-  if(!k) throw new Error('Gemini API 키 없음 — [SYS] 탭에서 입력해주세요');
+/* ─ Gemini 모델 자동 감지 ─ */
+let _geminiModelCache = null; // { model, key, ts }
 
-  // 최신 모델 순서로 폴백 시도 (2025~2026 기준)
-  const MODELS = [
+async function detectGeminiModel(key) {
+  // 10분 캐시 (같은 키에 한해)
+  if (_geminiModelCache && _geminiModelCache.key === key && Date.now() - _geminiModelCache.ts < 600000) {
+    return _geminiModelCache.model;
+  }
+
+  // ── 방법 1: API로 모델 목록 조회 ──
+  try {
+    const r = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models?key=' + key,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (r.ok) {
+      const data = await r.json();
+      const models = (data.models || [])
+        .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map(m => m.name.split('/').pop())
+        .filter(m => m.toLowerCase().includes('gemini'));
+
+      // 선호 순서: 2.5-flash > 2.0-flash > flash계열 > pro계열
+      const pick =
+        models.find(m => m.includes('2.5') && m.includes('flash')) ||
+        models.find(m => m.includes('2.0') && m.includes('flash')) ||
+        models.find(m => m.includes('flash')) ||
+        models.find(m => m.includes('2.5') && m.includes('pro'))  ||
+        models.find(m => m.includes('pro')) ||
+        models[0];
+
+      if (pick) {
+        _geminiModelCache = { model: pick, key, ts: Date.now() };
+        const el = document.getElementById('detectedModel');
+        if (el) el.textContent = '🤖 자동 감지 모델: ' + pick;
+        return pick;
+      }
+    }
+  } catch(e) { /* 목록 조회 실패 → 폴백으로 */ }
+
+  // ── 방법 2: 후보 모델 직접 시도 ──
+  const candidates = [
+    'gemini-2.5-flash-preview-04-17',
+    'gemini-2.5-pro-preview-03-25',
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
+    'gemini-2.0-flash-exp',
     'gemini-1.5-flash-latest',
-    'gemini-1.5-pro-latest',
-    'gemini-pro'
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-pro-latest'
   ];
-
-  let lastErr = '';
-  for (const model of MODELS) {
+  for (const m of candidates) {
     try {
-      const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+k,
+      const r = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + key,
         {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({
-            contents:[{parts:[{text:prompt}]}],
-            generationConfig:{maxOutputTokens:maxTokens}
-          })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }], generationConfig: { maxOutputTokens: 5 } }),
+          signal: AbortSignal.timeout(6000)
         }
       );
-      if (!res.ok) {
-        const e = await res.json().catch(()=>({}));
-        const msg = e?.error?.message || 'HTTP '+res.status;
-        // 모델 미지원 오류면 다음 모델 시도
-        if (msg.includes('not found') || msg.includes('not supported') || res.status===404) {
-          lastErr = '['+model+'] '+msg;
-          continue;
-        }
-        throw new Error(msg);
+      // 200 또는 400(bad request지만 모델은 존재) → 사용 가능
+      if (r.ok || r.status === 400) {
+        _geminiModelCache = { model: m, key, ts: Date.now() };
+        const el = document.getElementById('detectedModel');
+        if (el) el.textContent = '🤖 폴백 감지 모델: ' + m;
+        return m;
       }
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (text) return text;
-    } catch(e) {
-      // 네트워크 오류 등 — 다음 모델로
-      lastErr = '['+model+'] '+e.message;
-      continue;
-    }
+    } catch(_) { continue; }
   }
-  throw new Error('사용 가능한 Gemini 모델 없음. API 키를 확인해주세요. (' + lastErr + ')');
+  throw new Error('사용 가능한 Gemini 모델을 찾을 수 없습니다. API 키와 결제 정보를 확인해주세요.');
 }
+
+async function callGemini(prompt, maxTokens = 800) {
+  const k = getGeminiKey();
+  if (!k) throw new Error('Gemini API 키 없음 — [SYS] 탭에서 입력해주세요');
+
+  const model = await detectGeminiModel(k);
+
+  const res = await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + k,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens }
+      })
+    }
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    _geminiModelCache = null; // 실패 시 캐시 초기화 → 다음 호출에서 재감지
+    throw new Error(e?.error?.message || 'HTTP ' + res.status);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
 
 async function callClaude(prompt) {
   const k=getAnthropicKey();
@@ -1206,7 +1259,11 @@ function addMsg(type,text){
 function saveGemini(){
   const k=document.getElementById('geminiKey').value.trim();
   if(!k){toast('API 키를 입력해주세요','r');return;}
-  localStorage.setItem('gemini_key',k); toast('Gemini API 키 저장 완료','g');
+  localStorage.setItem('gemini_key',k);
+  _geminiModelCache=null; // 키 변경 시 모델 캐시 초기화
+  const el=document.getElementById('detectedModel');
+  if(el)el.textContent='';
+  toast('Gemini API 키 저장 완료 — 다음 사용 시 모델 자동 감지','g');
 }
 function saveAnthropic(){
   const k=document.getElementById('anthropicKey').value.trim();
@@ -1242,40 +1299,66 @@ function switchTab(id,btn){
 async function testGemini() {
   const k = getGeminiKey();
   const result = document.getElementById('testResult');
-  if (!k) { result.textContent = '❌ API 키를 먼저 입력해주세요'; result.style.color='var(--red)'; return; }
-  result.textContent = '🔄 테스트 중...'; result.style.color='var(--muted)';
+  if (!k) { result.innerHTML = '<span style="color:var(--red)">❌ API 키를 먼저 입력해주세요</span>'; return; }
 
-  const MODELS = [
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-pro-latest',
-    'gemini-pro'
-  ];
-  const lines = [];
-  for (const model of MODELS) {
-    try {
-      const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+k,
-        { method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({contents:[{parts:[{text:'안녕'}]}],generationConfig:{maxOutputTokens:10}}) }
-      );
-      if (res.ok) {
-        lines.push('✅ '+model+' — 사용 가능');
-      } else {
-        const e = await res.json().catch(()=>({}));
-        const msg = e?.error?.message||'HTTP '+res.status;
-        lines.push('❌ '+model+' — '+(msg.length>50?msg.slice(0,50)+'…':msg));
-      }
-    } catch(e) {
-      lines.push('⚠ '+model+' — 네트워크 오류');
+  result.innerHTML = '🔄 사용 가능한 모델 자동 감지 중...'; result.style.color='var(--muted)';
+
+  // 캐시 초기화 → 강제 재감지
+  _geminiModelCache = null;
+  const el = document.getElementById('detectedModel');
+  if(el) el.textContent = '';
+
+  try {
+    // 모델 목록 조회
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+k,
+      { signal: AbortSignal.timeout(8000) });
+
+    let lines = [];
+
+    if (!res.ok) {
+      // 목록 조회 실패 → 상태코드 원인 안내
+      const errData = await res.json().catch(()=>({}));
+      const errMsg = errData?.error?.message || 'HTTP '+res.status;
+      lines.push('<span style="color:var(--red)">❌ 모델 목록 조회 실패</span>');
+      lines.push('<span style="color:var(--muted);font-size:9px">'+errMsg+'</span>');
+      if (res.status === 400) lines.push('<span style="color:var(--gold)">→ API 키 형식 오류</span>');
+      if (res.status === 403) lines.push('<span style="color:var(--gold)">→ API 키 권한 부족 또는 결제 미등록</span>');
+      if (res.status === 429) lines.push('<span style="color:var(--gold)">→ 요청 한도 초과 — 잠시 후 재시도</span>');
+      result.innerHTML = lines.join('<br>');
+      toast('모델 목록 조회 실패 ('+res.status+')', 'r');
+      return;
     }
+
+    const data = await res.json();
+    const all = (data.models || []).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent'));
+    const geminiModels = all.map(m=>m.name.split('/').pop()).filter(m=>m.toLowerCase().includes('gemini'));
+
+    if (!geminiModels.length) {
+      result.innerHTML = '<span style="color:var(--red)">❌ generateContent 지원 모델 없음</span><br>'+
+        '<span style="font-size:9px;color:var(--muted)">계정에 Gemini API 접근 권한이 없을 수 있습니다</span>';
+      toast('사용 가능 모델 없음', 'r');
+      return;
+    }
+
+    lines.push('<span style="color:var(--green)">✅ 사용 가능 모델 '+geminiModels.length+'개 발견</span>');
+    geminiModels.slice(0,10).forEach((m,i)=>{
+      const star = i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':'   ';
+      lines.push(star+'<span style="color:var(--txt)">'+m+'</span>');
+    });
+    if(geminiModels.length>10) lines.push('   <span style="color:var(--hint)">... 외 '+(geminiModels.length-10)+'개</span>');
+    result.innerHTML = lines.join('<br>');
+
+    // 최적 모델 자동 선택
+    await detectGeminiModel(k);
+    toast('자동 감지 완료: '+(_geminiModelCache?.model||'?'), 'g');
+
+  } catch(e) {
+    result.innerHTML = '<span style="color:var(--red)">❌ '+e.message+'</span><br>'+
+      '<span style="font-size:9px;color:var(--muted)">• API 키 유효성 확인<br>'+
+      '• aistudio.google.com에서 키 재발급<br>'+
+      '• Google Cloud 결제 정보 등록 필요할 수 있음</span>';
+    toast('테스트 실패', 'r');
   }
-  result.innerHTML = lines.join('<br>');
-  result.style.color='var(--txt)';
-  const ok = lines.filter(l=>l.startsWith('✅'));
-  if(ok.length>0) { toast('사용 가능한 모델 '+ok.length+'개 확인','g'); }
-  else { toast('사용 가능한 모델 없음 — API 키를 확인해주세요','r'); }
 }
 
 function init() {
