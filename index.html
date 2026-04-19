@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v4.5 - Real Price</title>
+<title>ChipBot v4.6 - Kiwoom Hyper-Link</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,7 @@
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px;overflow:hidden;}
 #app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto; background:rgba(11,13,16,0.98); backdrop-filter:blur(15px)}
 
-/* Splash */
+/* Splash Screen */
 #splash {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items:center;
@@ -40,11 +40,13 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 .stab{padding:6px 16px; border:1px solid var(--bdr); border-radius:4px; font-size:11px; font-weight:600; color:var(--muted); background:var(--bg2); white-space:nowrap; cursor:pointer;}
 .stab.act{border-color:var(--green); color:var(--green); background:var(--green-bg)}
 
-.h-price-wrap{display:flex; align-items:baseline; gap:10px; cursor:pointer;}
+/* 클릭 가능한 헤더 가격 */
+.h-price-wrap{display:flex; align-items:center; gap:10px; cursor:pointer; transition: opacity 0.2s;}
+.h-price-wrap:active{opacity: 0.6;}
 .h-price{font-size:36px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono)}
-.h-tag{font-size:10px; color:var(--blue); border:1px solid var(--blue); padding:1px 4px; border-radius:3px; vertical-align:middle}
+.h-tag-kiwoom{font-size:10px; color:var(--blue); border:1px solid var(--blue); padding:1px 5px; border-radius:3px; font-weight:800; letter-spacing:0.5px}
 
-/* Content */
+/* Content Area */
 #content{flex:1;overflow-y:auto;padding:16px; scrollbar-width:none;}
 #content::-webkit-scrollbar{display:none}
 
@@ -55,18 +57,24 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 .die-label{font-size:9px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
 .die-val{font-size:24px;font-weight:700;font-family:var(--mono)}
 
-/* ETF Item - Clickable */
+/* ETF Grid - Item clickable */
 .etf-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
 .etf-item{
-  background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:12px;
-  cursor:pointer; transition: transform 0.1s, background 0.2s; position:relative;
+  background:var(--bg3); border:1px solid var(--bdr); border-radius:4px; padding:14px;
+  cursor:pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); position:relative;
+  overflow:hidden;
 }
-.etf-item:active{transform:scale(0.96); background:var(--bg2)}
-.etf-title{font-size:11px; font-weight:700; margin-bottom:6px; color:var(--blue); display:flex; justify-content:space-between; align-items:center}
-.kiwoom-icon{font-size:9px; background:var(--blue); color:var(--bg); padding:1px 3px; border-radius:2px; font-weight:800}
-.etf-price{font-size:15px; font-weight:700; margin-bottom:5px; font-family:var(--mono)}
+.etf-item:active{transform:scale(0.95); background:var(--bg2)}
+.etf-item::after{
+  content: 'TRADE'; position: absolute; top: 0; right: 0; background: var(--blue);
+  color: var(--bg); font-size: 8px; font-weight: 900; padding: 2px 5px; border-radius: 0 0 0 4px;
+  opacity: 0.8;
+}
+.etf-title{font-size:11px; font-weight:700; margin-bottom:6px; color:var(--blue); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.etf-price{font-size:16px; font-weight:700; margin-bottom:6px; font-family:var(--mono)}
 .etf-weight{font-size:10px; color:var(--muted); line-height:1.4}
 
+/* System Controls */
 .savebtn{width:100%;padding:16px;background:var(--green-bg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;text-transform:uppercase; cursor:pointer}
 #tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom)}
 .tb{flex:1;padding:18px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border:none;background:transparent;}
@@ -78,20 +86,21 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 <body>
 
 <div id="splash">
-  <div style="width:250px; height:250px; border:2px solid var(--green); border-radius:10px; display:flex; justify-content:center; align-items:center; box-shadow:0 0 30px var(--green-bg)">
-    <div style="font-family:var(--mono); color:var(--green); font-size:20px; font-weight:700; text-align:center;">CHIPBOT v4.5<br>PRICE PATCH</div>
+  <div style="width:260px; height:260px; border:2px solid var(--green); border-radius:12px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 0 40px var(--green-bg)">
+    <div style="font-family:var(--mono); color:var(--green); font-size:22px; font-weight:900; letter-spacing:2px">CHIPBOT v4.6</div>
+    <div style="color:var(--muted); font-size:10px; margin-top:10px; letter-spacing:3px">SYNCING KIWOOM CORE</div>
   </div>
 </div>
 
 <div id="app">
   <div id="hdr">
     <div class="stabs">
-      <button class="stab act" onclick="switchStock('samsung',this)">Die 0: SEC (218K)</button>
-      <button class="stab" onclick="switchStock('skhynix',this)">Die 1: HYX (1.14M)</button>
+      <button class="stab act" onclick="switchStock('samsung',this)">SEC (005930)</button>
+      <button class="stab" onclick="switchStock('skhynix',this)">HYX (000660)</button>
     </div>
-    <div class="h-price-wrap" id="headerPriceLink">
+    <div class="h-price-wrap" id="headerKiwoomLink">
       <span id="hPrice" class="h-price">₩-</span>
-      <span class="h-tag">KIWOOM</span>
+      <span class="h-tag-kiwoom">KIWOOM S#</span>
     </div>
   </div>
 
@@ -99,18 +108,18 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
     <div id="screen-trade" class="screen act">
       <div class="die-card"><div class="die-label">Wilder's RSI (14D)</div><div class="die-val" id="rsiV">-</div></div>
       
-      <div class="die-label">ETF Portfolio (2026.04.17 Closing Price)</div>
+      <div class="die-label" style="margin-bottom:10px">HBM Alpha Portfolios (Click to Trade)</div>
       <div id="etf-list" class="etf-grid"></div>
 
-      <button class="savebtn" onclick="runAI()">Execute Portfolio Strategy ↗</button>
-      <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.7; border-left:1px solid var(--bdr); padding-left:12px"></div>
+      <button class="savebtn" onclick="runAI()">Gemini Portfolio Analysis ↗</button>
+      <div id="aiRep" style="margin-top:16px; font-size:11px; color:var(--muted); line-height:1.8; border-left:2px solid var(--bg3); padding-left:14px"></div>
     </div>
 
     <div id="screen-news" class="screen"><div id="news-list"></div></div>
     <div id="screen-chat" class="screen">
       <div id="chat-logs" style="height:350px; overflow-y:auto; padding:10px"></div>
       <div style="display:flex; padding:10px; background:var(--bg2); gap:10px; border-radius:4px">
-        <input type="text" id="chat-input" style="flex:1; background:transparent; border:none; color:#fff; outline:none" placeholder="질문하기..." onkeypress="if(event.keyCode==13) sendChat()">
+        <input type="text" id="chat-input" style="flex:1; background:transparent; border:none; color:#fff; outline:none" placeholder="비서에게 질문..." onkeypress="if(event.keyCode==13) sendChat()">
         <button onclick="sendChat()" style="background:none; border:none; color:var(--green); font-weight:700">SEND</button>
       </div>
     </div>
@@ -129,7 +138,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
 </div>
 
 <script>
-/* ── [데이터] 2026.04.17. 실제 종가 데이터 ── */
+/* ── [데이터] 최신가 및 키움 종목코드 ── */
 const STOCKS = {
   samsung: { name:'삼성전자', code:'005930', lastClose: 218000, prevClose: 216000 },
   skhynix: { name:'SK하이닉스', code:'000660', lastClose: 1144000, prevClose: 1128000 }
@@ -150,24 +159,22 @@ function calcRSI(p, n=14){
   if(p.length < n+1) return 50;
   let g=[], l=[]; for(let i=1;i<p.length;i++){ const d=p[i]-p[i-1]; g.push(d>0?d:0); l.push(d<0?-d:0); }
   let ag=g.slice(0,n).reduce((a,b)=>a+b)/n, al=l.slice(0,n).reduce((a,b)=>a+b)/n;
-  for(let i=n;i<g.length;i++){ ag=(ag*(n-1)+g[i])/n; al=(al*(n-1)+l[i])/n; }
+  for(let i=n; i<g.length; i++){ ag=(ag*(n-1)+g[i])/n; al=(al*(n-1)+l[i])/n; }
   return al===0?100:parseFloat((100-(100/(1+ag/al))).toFixed(1));
 }
 
-/* 키움증권 연동 */
+/* 키움증권 모바일 연동 함수 */
 function openKiwoom(code) {
-  const url = `https://m.kiwoom.com/m/invest/stock/investStockQuote?code=${code}`;
-  window.open(url, '_blank');
+  // 모바일 영웅문S# 현재가 정보 웹 페이지
+  const kiwoomUrl = `https://m.kiwoom.com/m/invest/stock/investStockQuote?code=${code}`;
+  window.open(kiwoomUrl, '_blank');
 }
 
 function updateETFUI() {
   const list = document.getElementById('etf-list');
   list.innerHTML = ETFS.map(e => `
     <div class="etf-item" onclick="openKiwoom('${e.code}')">
-      <div class="etf-title">
-        ${e.name}
-        <span class="kiwoom-icon">K</span>
-      </div>
+      <div class="etf-title">${e.name}</div>
       <div class="etf-price">₩${e.price.toLocaleString()}</div>
       <div class="etf-weight">SEC: ${e.sec} / HYX: ${e.hyx}</div>
     </div>
@@ -177,7 +184,7 @@ function updateETFUI() {
 async function runAI() {
   const k = localStorage.getItem('gemini_key');
   if(!k) return;
-  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000 기준 투자 포트폴리오 추천해줘.`;
+  const prompt = `삼성전자 ₩218,000, 하이닉스 ₩1,144,000 상황에서 로지님에게 포트폴리오 전략을 150자 이내로 제안해줘.`;
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${k}`, {
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
@@ -193,10 +200,12 @@ function updateUI(){
   const s = STOCKS[cur]; 
   document.getElementById('hPrice').textContent=`₩${s.lastClose.toLocaleString()}`;
   document.getElementById('rsiV').textContent = calcRSI(pH[cur]);
-  document.getElementById('headerPriceLink').onclick = () => openKiwoom(s.code);
+  
+  // 헤더 가격 클릭 시 해당 종목 키움 연결
+  document.getElementById('headerKiwoomLink').onclick = () => openKiwoom(s.code);
 }
 
-function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('저장 완료'); }
+function saveAll(){ localStorage.setItem('gemini_key', document.getElementById('geminiKey').value); alert('설정이 안전하게 저장되었습니다.'); }
 
 function init(){
   ['samsung','skhynix'].forEach(k=>{
@@ -205,7 +214,7 @@ function init(){
   });
   updateUI(); updateETFUI();
   document.getElementById('geminiKey').value=localStorage.getItem('gemini_key')||"";
-  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1500);
+  setTimeout(() => document.getElementById('splash').classList.add('hidden'), 2000);
 }
 init();
 </script>
