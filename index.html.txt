@@ -3,9 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v3.1 - Notion Sync</title>
+<title>ChipBot v3.4 - Gemini Edition</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ChipBot">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2533/2533031.png">
+
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -16,118 +23,125 @@
   --red:#f87171;--red-bg:rgba(248,113,113,.07);--red-bd:#991b1b;
   --blue:#60a5fa;--amber:#fbbf24;--purple:#a78bfa;
   --font:'JetBrains Mono','Courier New',monospace;
-  --r:6px;--rl:10px;
+  --r:8px;--rl:12px;
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px;overflow:hidden; -webkit-user-select:none; user-select:none;}
+#app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto; background:var(--bg)}
 
-/* Header & Tabs */
-#hdr{padding:12px 16px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+#hdr{padding:16px 16px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0; padding-top:calc(16px + env(safe-area-inset-top))}
 .hdr-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .logo{font-size:11px;color:var(--muted);letter-spacing:.08em}
 .stabs{display:flex;gap:4px;margin-left:auto}
-.stab{padding:4px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-size:11px;font-family:var(--font);color:var(--muted);background:transparent;cursor:pointer;transition:.15s}
+.stab{padding:5px 12px;border:1px solid var(--bdr2);border-radius:var(--r);font-size:11px;color:var(--muted);background:transparent;cursor:pointer}
 .stab.act{border-color:var(--green);color:var(--green);background:var(--green-bg)}
-.h-price{font-size:26px;font-weight:700;letter-spacing:-.02em}
-.h-price.up{color:var(--red)}.h-price.dn{color:var(--blue)}
-.h-chg{font-size:13px}.h-chg.up{color:var(--red)}.h-chg.dn{color:var(--blue)}
-#mktbar{display:flex;align-items:center;gap:8px;padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--bdr);font-size:11px}
-.mkt-badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--bg4);color:var(--muted)}
-.mkt-badge.mkt-open{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.h-price{font-size:28px;font-weight:700;letter-spacing:-.02em}
 
-/* Content & UI Elements */
-#content{flex:1;overflow-y:auto;padding:12px 16px;scrollbar-width:none}
-.mg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
-.mc{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:9px 12px}
-.mv{font-size:18px;font-weight:700}.mv.up{color:var(--red)}.mv.dn{color:var(--blue)}.mv.g{color:var(--green)}
-.clabel{font-size:10px;color:var(--muted);margin-bottom:5px}
-.cwrap{position:relative;width:100%;margin-bottom:10px}
-.aisec{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);padding:12px;margin-bottom:12px}
-.btn{padding:5px 12px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);font-size:10px;font-family:var(--font);color:var(--txt);cursor:pointer}
+#content{flex:1;overflow-y:auto;padding:12px 16px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
+#content::-webkit-scrollbar{display:none}
+
+/* 채팅 UI */
+#chat-wrap{display:flex;flex-direction:column;height:100%}
+#chat-logs{flex:1;overflow-y:auto;margin-bottom:12px;padding-right:4px}
+.msg{margin-bottom:10px;max-width:85%;padding:10px;border-radius:var(--r);font-size:12px;line-height:1.5}
+.msg.ai{background:var(--bg2);color:var(--txt);align-self:flex-start;border:1px solid var(--bdr)}
+.msg.user{background:var(--green-bg);color:var(--green);align-self:flex-end;margin-left:auto;border:1px solid var(--green-bd)}
+#chat-input-area{display:flex;gap:8px;background:var(--bg2);padding:8px;border-radius:var(--rl);border:1px solid var(--bdr)}
+#chat-input{flex:1;background:transparent;border:none;color:var(--txt);font-family:var(--font);outline:none;font-size:12px}
+
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mc{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:12px}
+.ml{font-size:10px;color:var(--muted);margin-bottom:4px}
+.mv{font-size:20px;font-weight:700}
+
+.aisec{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);padding:14px;margin-bottom:12px}
+.btn{padding:8px 16px;background:transparent;border:1px solid var(--bdr2);border-radius:var(--r);font-size:11px;font-family:var(--font);color:var(--txt);cursor:pointer}
 .btn-g{border-color:var(--green);color:var(--green);background:var(--green-bg)}
-.apii{width:100%;background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--r);font-family:var(--font);font-size:12px;color:var(--txt);padding:8px 10px;outline:none;margin-top:6px}
-.savebtn{display:block;width:100%;padding:9px;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);font-family:var(--font);font-size:12px;color:var(--green);cursor:pointer;margin-top:8px}
 
-#tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg)}
-.tb{flex:1;padding:11px 8px;text-align:center;font-size:10px;color:var(--muted);cursor:pointer;border:none;background:transparent}
-.tb.act{color:var(--green);border-top:1px solid var(--green)}
-.screen{display:none}.screen.act{display:block}
-#toastwrap{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:480px;z-index:999;pointer-events:none}
-.toast{background:var(--bg3);border:1px solid var(--bdr2);padding:8px 12px;font-size:11px;margin-bottom:6px;opacity:0;transition:.2s;border-left:3px solid var(--blue)}
-.toast.show{opacity:1}.t-buy{border-left-color:var(--green)}.t-sell{border-left-color:var(--red)}
+.apii{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);font-family:var(--font);font-size:12px;color:var(--txt);padding:10px 12px;outline:none;margin-top:8px}
+.savebtn{display:block;width:100%;padding:12px;background:var(--green-bg);border:1px solid var(--green);border-radius:var(--r);font-family:var(--font);font-size:13px;color:var(--green);font-weight:700;margin-top:12px}
+
+#tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom)}
+.tb{flex:1;padding:14px 8px;text-align:center;font-size:11px;color:var(--muted);border:none;background:transparent}
+.tb.act{color:var(--green);border-top:2px solid var(--green);margin-top:-1px}
+
+.screen{display:none; height:100%}.screen.act{display:block}
+#toastwrap{position:fixed;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:calc(100% - 32px);z-index:9999}
+.toast{background:var(--bg3);border-left:4px solid var(--blue);padding:12px;font-size:12px;margin-bottom:8px;border-radius:4px;opacity:0;transition:0.3s}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
 <div id="toastwrap"></div>
 <div id="app">
   <div id="hdr">
-    <div class="hdr-top"><span class="logo">◈ ChipBot v3.1</span>
+    <div class="hdr-top">
+      <span class="logo">◈ CHIPBOT v3.4 (Gemini Inside)</span>
       <div class="stabs">
         <button class="stab act" onclick="switchStock('samsung',this)">삼성전자</button>
         <button class="stab" onclick="switchStock('skhynix',this)">SK하이닉스</button>
       </div>
     </div>
-    <div style="display:flex;align-items:baseline;gap:10px">
-      <span class="h-price" id="hPrice">₩-</span><span class="h-chg" id="hChg"></span>
-    </div>
-  </div>
-
-  <div id="mktbar">
-    <span class="mkt-badge" id="mktBadge">-</span>
-    <span id="mktClock" style="margin-left:auto;color:var(--hint)">-</span>
+    <div id="hPrice" class="h-price">₩-</div>
   </div>
 
   <div id="content">
     <div id="screen-trade" class="screen act">
       <div class="mg">
-        <div class="mc"><div class="clabel">Wilder's RSI</div><div class="mv" id="rsiV">-</div></div>
-        <div class="mc"><div class="clabel">평가손익</div><div class="mv" id="urPnl">-</div></div>
+        <div class="mc"><div class="ml">Wilder's RSI</div><div class="mv" id="rsiV">-</div></div>
+        <div class="mc"><div class="ml">포트폴리오</div><div class="mv" id="pfVal" style="font-size:16px">₩10,000,000</div></div>
       </div>
-      <div class="cwrap" style="height:180px"><canvas id="pc"></canvas></div>
+      <div class="mc" style="margin-bottom:12px">
+        <div style="height:180px"><canvas id="pc"></canvas></div>
+      </div>
       <div class="aisec">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-weight:700">AI 분석 및 노션 동기화</span>
-          <button class="btn btn-g" onclick="runAI()">분석 실행 ↗</button>
-        </div>
-        <div id="aiRep" style="font-size:11px;color:var(--muted);line-height:1.6">설정에서 API 키와 노션 정보를 입력하세요.</div>
+        <button class="btn btn-g" style="width:100%" onclick="runAI()">Gemini 분석 및 노션 기록 ↗</button>
+        <div id="aiRep" style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:8px">Gemini가 차트를 분석하고 기록합니다.</div>
       </div>
-      <div class="mc" style="margin-top:12px">
-        <div class="clabel">최근 거래 기록</div>
-        <div id="tradeLog" style="font-size:10px;max-height:80px;overflow-y:auto"></div>
+    </div>
+
+    <div id="screen-chat" class="screen">
+      <div id="chat-wrap">
+        <div id="chat-logs">
+          <div class="msg ai">안녕하세요 로지님! 저(Gemini)와 직접 대화를 나눠보세요. 현재 시장에 대해 무엇이든 물어보세요!</div>
+        </div>
+        <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Gemini에게 질문하기..." onkeypress="if(event.keyCode==13) sendChat()">
+          <button onclick="sendChat()" style="background:none; border:none; color:var(--green); font-weight:700">전송</button>
+        </div>
       </div>
     </div>
 
     <div id="screen-set" class="screen">
-      <div style="margin-bottom:20px">
-        <div class="clabel">ANTHROPIC API KEY</div>
-        <input class="apii" type="password" id="apiKeyInput" placeholder="sk-ant-...">
+      <div class="mc" style="margin-bottom:16px">
+        <div class="ml">GOOGLE GEMINI API KEY</div>
+        <input class="apii" type="password" id="geminiKey" placeholder="AI Studio에서 받은 키를 입력하세요">
       </div>
-      <div style="margin-bottom:20px">
-        <div class="clabel">NOTION API 연동</div>
-        <input class="apii" type="password" id="notionKey" placeholder="내 통합 토큰 (secret_...)">
+      <div class="mc">
+        <div class="ml">NOTION 연동</div>
+        <input class="apii" type="password" id="notionKey" placeholder="내 통합 토큰">
         <input class="apii" type="text" id="notionDbId" placeholder="데이터베이스 ID">
-        <button class="savebtn" onclick="saveSettings()">모든 설정 저장</button>
+        <button class="savebtn" onclick="saveAllSettings()">설정 저장</button>
       </div>
-      <div style="font-size:10px;color:var(--hint)">v3.1 | Wilder's RSI & Notion Sync Enabled</div>
+      <div style="padding:15px; font-size:10px; color:var(--hint); line-height:1.6">
+        * API 키는 Google AI Studio(aistudio.google.com)에서 무료로 발급받을 수 있습니다.
+      </div>
     </div>
   </div>
 
   <div id="tabbar">
-    <button class="tb act" onclick="switchTab('trade',this)">거래</button>
+    <button class="tb act" onclick="switchTab('trade',this)">지표</button>
+    <button class="tb" onclick="switchTab('chat',this)">AI 채팅</button>
     <button class="tb" onclick="switchTab('set',this)">설정</button>
   </div>
 </div>
 
 <script>
 const STOCKS = {
-  samsung: { name:'삼성전자', ticker:'005930.KS', lastClose:78000 },
-  skhynix: { name:'SK하이닉스', ticker:'000660.KS', lastClose:185000 }
+  samsung: { name:'삼성전자', ticker:'005930.KS', lastClose:77000 },
+  skhynix: { name:'SK하이닉스', ticker:'000660.KS', lastClose:182000 }
 };
-
 let cur = 'samsung', pH = {samsung:[], skhynix:[]}, pChart;
-let holdings = 0, holdP = 0;
 
-/* ── [2번] Wilder's RSI (EMA 방식) ── */
 function calcRSI(prices, n = 14) {
   if (prices.length < n + 1) return 50;
   let gains = [], losses = [];
@@ -144,7 +158,70 @@ function calcRSI(prices, n = 14) {
   return avgL === 0 ? 100 : parseFloat((100 - (100 / (1 + avgG/avgL))).toFixed(1));
 }
 
-/* ── [1번] Notion 데이터 전송 ── */
+/* ── [핵심] Gemini API 호출 함수 ── */
+async function callGemini(prompt) {
+  const apiKey = localStorage.getItem('gemini_key');
+  if(!apiKey) return "설정 탭에서 Google Gemini API 키를 입력해주세요.";
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    return "Gemini와 연결하는 중 오류가 발생했습니다. API 키를 확인해 주세요.";
+  }
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+
+  addMessage('user', msg);
+  input.value = '';
+
+  const rsi = calcRSI(pH[cur]);
+  const price = pH[cur].at(-1);
+
+  const prompt = `당신은 반도체 전문 트레이딩 비서 'Gemini'입니다. 사용자 '로지님'에게 친절하고 위트있게 답변하세요. 
+  현재 종목: ${STOCKS[cur].name}, 가격: ₩${price.toLocaleString()}, RSI: ${rsi}. 
+  이 상황을 참고해서 사용자의 질문에 답하세요: "${msg}"`;
+
+  const response = await callGemini(prompt);
+  addMessage('ai', response);
+}
+
+function addMessage(type, text) {
+  const logs = document.getElementById('chat-logs');
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  div.textContent = text;
+  logs.appendChild(div);
+  logs.scrollTop = logs.scrollHeight;
+}
+
+async function runAI() {
+  const rsi = calcRSI(pH[cur]);
+  const action = rsi < 35 ? "매수 구간" : rsi > 65 ? "매도 구간" : "중립";
+  const price = pH[cur].at(-1);
+
+  const prompt = `${STOCKS[cur].name}의 현재 가격은 ₩${price.toLocaleString()}, Wilder's RSI는 ${rsi}입니다. 
+  이 지표를 바탕으로 현재 투자 전략을 100자 이내로 요약해 주세요.`;
+
+  const summary = await callGemini(prompt);
+  document.getElementById('aiRep').textContent = summary;
+
+  sendToNotion({ name: STOCKS[cur].name, action: action, price: price, pnl: `RSI: ${rsi} | ${summary.substring(0, 20)}...` });
+}
+
 async function sendToNotion(tradeData) {
   const key = localStorage.getItem('notion_key'), dbId = localStorage.getItem('notion_db_id');
   if (!key || !dbId) return;
@@ -154,8 +231,7 @@ async function sendToNotion(tradeData) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28' },
       body: JSON.stringify({
-        parent: { database_id: dbId },
-        properties: {
+        parent: { database_id: dbId }, properties: {
           "종목명": { title: [{ text: { content: tradeData.name } }] },
           "구분": { select: { name: tradeData.action } },
           "가격": { number: tradeData.price },
@@ -164,21 +240,21 @@ async function sendToNotion(tradeData) {
         }
       })
     });
-    toast('Notion 동기화 완료', 'info');
-  } catch (e) { console.error(e); }
+    toast('노션 동기화 완료');
+  } catch (e) {}
 }
 
-function saveSettings() {
-  localStorage.setItem('chipbot_key', document.getElementById('apiKeyInput').value);
+function saveAllSettings() {
+  localStorage.setItem('gemini_key', document.getElementById('geminiKey').value);
   localStorage.setItem('notion_key', document.getElementById('notionKey').value);
   localStorage.setItem('notion_db_id', document.getElementById('notionDbId').value);
-  toast('설정이 저장되었습니다.', 'info');
+  toast('설정이 저장되었습니다.');
 }
 
-function toast(m, t='info') {
+function toast(m) {
   const w = document.getElementById('toastwrap'), d = document.createElement('div');
-  d.className = `toast show t-${t}`; d.textContent = m;
-  w.appendChild(d); setTimeout(() => { d.remove(); }, 3000);
+  d.className = `toast show`; d.textContent = m;
+  w.appendChild(d); setTimeout(() => d.remove(), 2500);
 }
 
 function updateUI() {
@@ -186,8 +262,6 @@ function updateUI() {
   const rsi = calcRSI(prices);
   document.getElementById('hPrice').textContent = `₩${c.toLocaleString()}`;
   document.getElementById('rsiV').textContent = rsi;
-  document.getElementById('rsiV').style.color = rsi < 30 ? 'var(--green)' : rsi > 70 ? 'var(--red)' : 'var(--txt)';
-  
   if (!pChart) {
     const ctx = document.getElementById('pc').getContext('2d');
     pChart = new Chart(ctx, {
@@ -195,18 +269,7 @@ function updateUI() {
       data: { labels: prices.map((_,i)=>i), datasets: [{ data: prices, borderColor: '#f87171', borderWidth: 2, pointRadius: 0, tension: 0.2 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: 'rgba(255,255,255,0.05)' } } } }
     });
-  } else {
-    pChart.data.datasets[0].data = prices; pChart.update();
-  }
-}
-
-async function runAI() {
-  const rsi = calcRSI(pH[cur]);
-  const action = rsi < 35 ? "매수 권고" : rsi > 65 ? "매도 권고" : "관망";
-  document.getElementById('aiRep').textContent = `[Wilder's RSI: ${rsi}] 현재 지표상 ${action} 상태입니다.`;
-  
-  // 분석 시 노션에 상태 기록 (옵션)
-  sendToNotion({ name: STOCKS[cur].name, action: "AI 분석", price: pH[cur].at(-1), pnl: `RSI: ${rsi}` });
+  } else { pChart.data.datasets[0].data = prices; pChart.update(); }
 }
 
 function switchStock(k, b) {
@@ -224,16 +287,15 @@ function switchTab(id, b) {
 function init() {
   ['samsung', 'skhynix'].forEach(k => {
     let p = STOCKS[k].lastClose;
-    for(let i=0; i<50; i++) { p += (Math.random()-0.5)*1000; pH[k].push(Math.round(p)); }
+    for(let i=0; i<60; i++) { p += (Math.random()-0.5)*1500; pH[k].push(Math.round(p)); }
   });
   updateUI();
-  setInterval(() => {
-    const kst = new Date().toLocaleTimeString('ko-KR');
-    document.getElementById('mktClock').textContent = kst;
-  }, 1000);
+  document.getElementById('geminiKey').value = localStorage.getItem('gemini_key') || "";
+  document.getElementById('notionKey').value = localStorage.getItem('notion_key') || "";
+  document.getElementById('notionDbId').value = localStorage.getItem('notion_db_id') || "";
 }
-
 init();
 </script>
 </body>
 </html>
+
