@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ChipBot v5.6 - Robust AI</title>
+<title>ChipBot v6.0 - KOSPI AI Alert</title>
 <meta name="theme-color" content="#0b0d10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ChipBot">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -19,149 +20,183 @@
   --green:#4ade80;--gbg:rgba(74,222,128,.1);--gbd:rgba(74,222,128,.25);
   --red:#f87171;--rbg:rgba(248,113,113,.1);
   --blue:#60a5fa;--bbg:rgba(96,165,250,.1);
-  --gold:#fbbf24;--purple:#a78bfa;
+  --gold:#fbbf24;--amber:#f97316;--purple:#a78bfa;
   --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
 }
 html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);overflow:hidden}
 #app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto;background:var(--bg)}
 
 /* ── Header ── */
-#hdr{padding:calc(20px + env(safe-area-inset-top)) 16px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0}
-.stabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+#hdr{padding:calc(16px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.stabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none}
 .stabs::-webkit-scrollbar{display:none}
-.stab{padding:5px 14px;border:1px solid var(--bdr2);border-radius:4px;font-size:11px;font-weight:700;color:var(--muted);background:var(--bg2);cursor:pointer;white-space:nowrap;letter-spacing:.04em;font-family:var(--mono)}
+.stab{padding:5px 13px;border:1px solid var(--bdr2);border-radius:4px;font-size:11px;font-weight:700;color:var(--muted);background:var(--bg2);cursor:pointer;white-space:nowrap;letter-spacing:.04em;font-family:var(--mono)}
 .stab.act{border-color:var(--green);color:var(--green);background:var(--gbg)}
 .price-block{cursor:pointer}
-.price-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:4px}
-.h-price{font-size:34px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono);display:flex;align-items:baseline;gap:10px}
-.h-chg{font-size:13px;font-weight:600}
+.price-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:3px}
+.h-price{font-size:30px;font-weight:700;letter-spacing:-.04em;font-family:var(--mono);display:flex;align-items:baseline;gap:8px}
+.h-chg{font-size:12px;font-weight:600}
 .h-chg.up{color:var(--red)}.h-chg.dn{color:var(--blue)}
-.h-sub{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.03em}
+.h-sub{font-size:10px;color:var(--muted);margin-top:3px}
 
 /* ── Market bar ── */
-#mktbar{display:flex;align-items:center;gap:8px;padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;font-size:10px;font-family:var(--mono)}
-.mb{padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.06em}
+#mktbar{display:flex;align-items:center;gap:8px;padding:6px 16px;background:var(--bg2);border-bottom:1px solid var(--bdr);flex-shrink:0;font-family:var(--mono)}
+.mb{padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.06em}
 .mb-o{background:var(--gbg);color:var(--green);border:1px solid var(--gbd)}
 .mb-c{background:var(--bg4);color:var(--muted);border:1px solid var(--bdr)}
-#mktInfo{flex:1;color:var(--muted);font-size:10px}
-.cnt-badge{background:var(--bg4);border:1px solid var(--bdr);border-radius:3px;padding:2px 8px;color:var(--gold);font-weight:700;font-size:10px}
+#mktInfo{flex:1;color:var(--muted);font-size:9px}
+.cnt-badge{background:var(--bg4);border:1px solid var(--bdr);border-radius:3px;padding:2px 7px;color:var(--gold);font-weight:700;font-size:9px}
 
 /* ── Content ── */
-#content{flex:1;overflow-y:auto;padding:14px 16px;scrollbar-width:none}
+#content{flex:1;overflow-y:auto;padding:12px 16px;scrollbar-width:none}
 #content::-webkit-scrollbar{display:none}
 
 /* ── Tabbar ── */
 #tabbar{display:flex;border-top:1px solid var(--bdr);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom);flex-shrink:0}
-.tb{flex:1;padding:14px 4px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);border:none;background:transparent;cursor:pointer;letter-spacing:.08em;font-family:var(--mono);transition:.15s}
+.tb{flex:1;padding:12px 2px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);border:none;background:transparent;cursor:pointer;letter-spacing:.06em;font-family:var(--mono)}
 .tb.act{color:var(--green);background:var(--gbg);border-top:1px solid var(--green);margin-top:-1px}
-
-/* ── Screen ── */
 .screen{display:none}.screen.act{display:block}
 
-/* ── Countdown ── */
-.cd-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:12px 14px;margin-bottom:12px;text-align:center;display:none}
-.cd-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:5px}
-.cd-time{font-size:24px;font-weight:700;font-family:var(--mono);color:var(--txt);letter-spacing:.04em}
-.cd-sub{font-size:9px;color:var(--hint);margin-top:3px}
-
-/* ── CORE tab ── */
-.algo-card{background:var(--bg2);border:1px solid var(--bdr);border-left:4px solid var(--gold);border-radius:4px;padding:14px;margin-bottom:12px}
-.algo-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:6px}
-.algo-val{font-size:14px;font-weight:700;color:var(--gold);font-family:var(--mono);line-height:1.4}
-
-.section-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:10px}
-
-.etf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.etf-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:13px 12px;cursor:pointer;transition:.15s;position:relative;overflow:hidden;min-height:110px;display:flex;flex-direction:column}
-.etf-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.etf-item:active{opacity:.75;transform:scale(.98)}
-.r1::before{background:var(--gold)}.r2::before{background:var(--purple)}.r3::before{background:var(--blue)}.r4::before{background:var(--green)}.r5::before{background:var(--muted)}
-.etf-rank{font-size:9px;font-weight:700;letter-spacing:.08em;margin-bottom:5px;font-family:var(--mono)}
-.r1 .etf-rank{color:var(--gold)}.r2 .etf-rank{color:var(--purple)}.r3 .etf-rank{color:var(--blue)}.r4 .etf-rank{color:var(--green)}.r5 .etf-rank{color:var(--muted)}
-.etf-name{font-size:11px;font-weight:700;line-height:1.4;word-break:keep-all;color:var(--txt);margin-bottom:5px;flex:1}
-.etf-code{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px}
-.etf-wbar{height:4px;border-radius:2px;overflow:hidden;display:flex;gap:1px;margin-bottom:4px}
-.etf-wbar .ws{height:100%;border-radius:1px}
-.etf-wlabels{font-size:8px;color:var(--muted);display:flex;gap:6px;margin-bottom:6px}
-.etf-link{font-size:9px;color:var(--hint);font-family:var(--mono);margin-top:auto}
-
-.run-btn{width:100%;padding:14px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;letter-spacing:.1em;font-family:var(--mono);font-size:11px;margin-bottom:12px;transition:.15s}
+/* ── Shared components ── */
+.run-btn{width:100%;padding:12px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;letter-spacing:.1em;font-family:var(--mono);font-size:11px;margin-bottom:10px}
 .run-btn:hover{background:rgba(74,222,128,.18)}
 .run-btn:disabled{opacity:.4;cursor:not-allowed}
+.section-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:8px}
+.cd-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:10px 14px;margin-bottom:10px;text-align:center;display:none}
+.cd-time{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--txt);letter-spacing:.04em}
+.cd-sub{font-size:9px;color:var(--hint);margin-top:2px}
 
-.ai-rep-wrap{display:none;margin-bottom:14px}
-.ai-rep-label{font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px;font-family:var(--mono)}
-#aiRep{font-size:11px;color:var(--muted);line-height:1.8;border-left:2px solid var(--bg4);padding-left:14px}
+/* ── CORE tab ── */
+.algo-card{background:var(--bg2);border:1px solid var(--bdr);border-left:4px solid var(--gold);border-radius:4px;padding:12px;margin-bottom:10px}
+.algo-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:5px}
+.algo-val{font-size:13px;font-weight:700;color:var(--gold);font-family:var(--mono)}
+.etf-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.etf-item{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:11px 10px;cursor:pointer;position:relative;overflow:hidden;min-height:105px;display:flex;flex-direction:column}
+.etf-item::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.r1::before{background:var(--gold)}.r2::before{background:var(--purple)}
+.r3::before{background:var(--blue)}.r4::before{background:var(--green)}.r5::before{background:var(--muted)}
+.etf-item:active{opacity:.75;transform:scale(.98)}
+.etf-rank{font-size:9px;font-weight:700;letter-spacing:.08em;margin-bottom:4px;font-family:var(--mono)}
+.r1 .etf-rank{color:var(--gold)}.r2 .etf-rank{color:var(--purple)}.r3 .etf-rank{color:var(--blue)}.r4 .etf-rank{color:var(--green)}.r5 .etf-rank{color:var(--muted)}
+.etf-name{font-size:10px;font-weight:700;line-height:1.4;word-break:keep-all;color:var(--txt);margin-bottom:4px;flex:1}
+.etf-code{font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:5px}
+.etf-wbar{height:4px;border-radius:2px;overflow:hidden;display:flex;gap:1px;margin-bottom:3px}
+.etf-wbar .ws{height:100%;border-radius:1px}
+.etf-wlabels{font-size:8px;color:var(--muted);display:flex;gap:5px}
+.ai-rep-wrap{display:none;margin-bottom:12px}
+.ai-rep-label{font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:5px;font-family:var(--mono)}
+#aiRep{font-size:11px;color:var(--muted);line-height:1.8;border-left:2px solid var(--bg4);padding-left:12px}
+
+/* ── KOSPI tab ── */
+.pred-card{display:flex;align-items:center;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:12px 14px;margin-bottom:10px;gap:12px}
+.pred-left{flex:1}
+.pred-lbl{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:5px}
+.pred-badge{display:inline-block;font-size:12px;font-weight:700;padding:4px 12px;border-radius:3px;font-family:var(--mono);letter-spacing:.08em}
+.p-safe{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.4)}
+.p-caution{background:rgba(251,191,36,.15);color:var(--gold);border:1px solid rgba(251,191,36,.4)}
+.p-warning{background:rgba(249,115,22,.15);color:var(--amber);border:1px solid rgba(249,115,22,.4)}
+.p-danger{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.4);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.pred-score-wrap{text-align:right}
+.pred-score{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--txt);line-height:1}
+.pred-score-lbl{font-size:9px;color:var(--muted);margin-top:2px}
+
+.chart-ctrl{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.view-tabs{display:flex;gap:4px}
+.vt{padding:4px 12px;border:1px solid var(--bdr2);border-radius:3px;font-size:10px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;font-family:var(--mono);letter-spacing:.06em}
+.vt.act{border-color:var(--blue);color:var(--blue);background:var(--bbg)}
+.fetch-btn{margin-left:auto;padding:4px 10px;border:1px solid var(--bdr2);border-radius:3px;font-size:9px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;font-family:var(--mono);letter-spacing:.06em}
+.fetch-btn:hover{border-color:var(--green);color:var(--green)}
+.data-status{font-size:9px;color:var(--hint);font-family:var(--mono)}
+
+.canvas-wrap{position:relative;width:100%;margin-bottom:2px}
+.canvas-label{position:absolute;top:5px;right:8px;font-size:8px;color:var(--hint);font-family:var(--mono);z-index:1}
+.ma-legend{display:flex;gap:10px;margin-bottom:4px;font-size:8px;color:var(--muted);font-family:var(--mono)}
+.ma-dot{width:14px;height:1.5px;display:inline-block;vertical-align:middle;margin-right:3px}
+
+.signal-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.sig-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:9px 10px;position:relative;overflow:hidden}
+.sig-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px}
+.sig-safe::before{background:var(--green)}
+.sig-caution::before{background:var(--gold)}
+.sig-warning::before{background:var(--amber)}
+.sig-danger::before{background:var(--red)}
+.sig-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:3px;font-family:var(--mono)}
+.sig-val{font-size:13px;font-weight:700;font-family:var(--mono);margin-bottom:2px}
+.sig-safe .sig-val{color:var(--green)}.sig-caution .sig-val{color:var(--gold)}
+.sig-warning .sig-val{color:var(--amber)}.sig-danger .sig-val{color:var(--red)}
+.sig-desc{font-size:9px;color:var(--muted);line-height:1.4}
+
+.alert-toggle{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;margin-bottom:10px;cursor:pointer}
+.atg-label{font-size:11px;color:var(--txt);flex:1}
+.atg-sub{font-size:9px;color:var(--muted);display:block}
+.tg{width:30px;height:16px;border-radius:8px;background:var(--bg4);border:1px solid var(--bdr2);cursor:pointer;position:relative;flex-shrink:0}
+.tg.on{background:#166534;border-color:var(--green)}
+.td{width:10px;height:10px;border-radius:50%;background:var(--muted);position:absolute;top:2px;left:2px;transition:.2s}
+.tg.on .td{left:16px;background:var(--green)}
+
+.kospi-ai-rep{display:none;font-size:11px;color:var(--muted);line-height:1.8;border-left:2px solid var(--bg4);padding-left:12px;margin-bottom:10px}
 
 /* ── NEWS tab ── */
-.news-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.news-scan-btn{padding:6px 14px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin-left:auto}
+.news-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.news-scan-btn{padding:5px 12px;background:var(--gbg);border:1px solid var(--green);border-radius:3px;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.08em;margin-left:auto}
 .news-scan-btn:disabled{opacity:.4;cursor:not-allowed}
-
-.news-filter{display:flex;gap:6px;margin-bottom:12px}
-.nf-btn{padding:4px 12px;border:1px solid var(--bdr2);border-radius:3px;font-size:10px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;font-family:var(--mono);letter-spacing:.06em;transition:.15s}
+.news-filter{display:flex;gap:5px;margin-bottom:10px}
+.nf-btn{padding:3px 10px;border:1px solid var(--bdr2);border-radius:3px;font-size:10px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;font-family:var(--mono)}
 .nf-btn.act{border-color:var(--blue);color:var(--blue);background:var(--bbg)}
-
-.news-loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:11px;line-height:1.8}
-.spin{width:18px;height:18px;border:2px solid var(--bdr2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+.news-loading{text-align:center;padding:36px 20px;color:var(--muted);font-size:11px;line-height:1.8}
+.spin{width:16px;height:16px;border:2px solid var(--bdr2);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-.n-stack{background:var(--bg2);border-left:3px solid var(--blue);padding:12px 14px;margin-bottom:10px;border-radius:0 4px 4px 0}
-.n-stack.corp-sec{border-left-color:var(--blue)}
-.n-stack.corp-hyx{border-left-color:var(--purple)}
-.n-corp{font-size:9px;font-weight:900;letter-spacing:.12em;margin-bottom:5px;font-family:var(--mono)}
+.n-stack{background:var(--bg2);border-left:3px solid var(--blue);padding:10px 12px;margin-bottom:8px;border-radius:0 4px 4px 0}
+.n-stack.corp-sec{border-left-color:var(--blue)}.n-stack.corp-hyx{border-left-color:var(--purple)}
+.n-corp{font-size:9px;font-weight:900;letter-spacing:.12em;margin-bottom:4px;font-family:var(--mono)}
 .corp-sec .n-corp{color:var(--blue)}.corp-hyx .n-corp{color:var(--purple)}
-.n-title{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--txt);line-height:1.4}
-.n-sum{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px}
-.n-impact{display:inline-block;font-size:8px;font-weight:700;padding:2px 7px;border-radius:2px;font-family:var(--mono)}
+.n-title{font-size:12px;font-weight:700;margin-bottom:3px;color:var(--txt);line-height:1.4}
+.n-sum{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:5px}
+.n-impact{display:inline-block;font-size:8px;font-weight:700;padding:2px 6px;border-radius:2px;font-family:var(--mono)}
 .imp-pos{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
 .imp-neg{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
 .imp-neu{background:var(--bg4);color:var(--muted);border:1px solid var(--bdr)}
-
-.news-err{padding:20px;color:var(--red);font-size:11px;text-align:center;line-height:1.9;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:4px}
+.news-err{padding:16px;color:var(--red);font-size:11px;text-align:center;line-height:1.9;background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:4px}
 
 /* ── CHAT tab ── */
-#chat-logs{max-height:340px;overflow-y:auto;margin-bottom:12px;scrollbar-width:none;padding-right:2px}
+#chat-logs{max-height:310px;overflow-y:auto;margin-bottom:10px;scrollbar-width:none}
 #chat-logs::-webkit-scrollbar{display:none}
-.msg-user{background:var(--gbg);color:var(--green);border:1px solid var(--gbd);padding:10px 13px;border-radius:4px;margin-bottom:10px;font-size:12px;line-height:1.6;text-align:right}
-.msg-ai{background:var(--bg2);border:1px solid var(--bdr);padding:10px 13px;border-radius:4px;margin-bottom:10px;font-size:12px;line-height:1.7;color:var(--txt)}
-.chat-input-wrap{display:flex;gap:8px;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:10px 13px;margin-bottom:8px}
+.msg-user{background:var(--gbg);color:var(--green);border:1px solid var(--gbd);padding:9px 11px;border-radius:4px;margin-bottom:8px;font-size:12px;line-height:1.6;text-align:right}
+.msg-ai{background:var(--bg2);border:1px solid var(--bdr);padding:9px 11px;border-radius:4px;margin-bottom:8px;font-size:12px;line-height:1.7;color:var(--txt)}
+.chat-input-wrap{display:flex;gap:7px;background:var(--bg2);border:1px solid var(--bdr);border-radius:4px;padding:9px 11px;margin-bottom:7px}
 #chat-input{flex:1;background:transparent;border:none;color:var(--txt);outline:none;font-size:12px;font-family:var(--font)}
 #chat-input::placeholder{color:var(--hint)}
 .chat-send{color:var(--green);background:none;border:none;font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.06em;white-space:nowrap}
-#chatStatus{font-size:10px;color:var(--muted);text-align:center;padding:6px;font-family:var(--mono);letter-spacing:.06em}
-
-.ai-engine{display:flex;gap:6px;margin-bottom:12px}
-.eng-btn{flex:1;padding:6px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;font-size:9px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--mono);letter-spacing:.06em}
+#chatStatus{font-size:9px;color:var(--muted);text-align:center;padding:5px;font-family:var(--mono)}
+.ai-engine{display:flex;gap:5px;margin-bottom:10px}
+.eng-btn{flex:1;padding:5px;background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;font-size:9px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--mono)}
 .eng-btn.act{border-color:var(--purple);color:var(--purple);background:rgba(167,139,250,.1)}
 
 /* ── SYS tab ── */
-.sys-card{background:var(--bg2);border:1px solid var(--bdr);border-left:4px solid var(--muted);border-radius:4px;padding:14px;margin-bottom:12px}
-.sys-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:8px}
-.sys-input{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt);padding:10px 12px;font-size:12px;font-family:var(--mono);outline:none;margin-bottom:8px}
+.sys-card{background:var(--bg2);border:1px solid var(--bdr);border-left:4px solid var(--muted);border-radius:4px;padding:12px;margin-bottom:10px}
+.sys-label{font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:7px}
+.sys-input{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:3px;color:var(--txt);padding:9px 10px;font-size:11px;font-family:var(--mono);outline:none;margin-bottom:7px}
 .sys-input:focus{border-color:var(--green)}
-.sys-hint{font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:10px}
-.sys-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr)}
+.sys-hint{font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:8px}
+.sys-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bdr)}
 .sys-row:last-child{border:none}
 .sys-row-label{font-size:11px;color:var(--txt);flex:1}
-.sys-row-sub{font-size:9px;color:var(--muted);display:block;margin-top:1px}
-.sys-row-val{font-size:11px;color:var(--txt);font-family:var(--mono)}
-.save-g{width:100%;padding:13px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-bottom:0}
-.save-b{width:100%;padding:13px;background:var(--bbg);border:1px solid var(--blue);border-radius:4px;color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-bottom:0}
-
-.ver{text-align:center;margin-top:20px;font-size:10px;color:var(--hint);font-family:var(--mono);letter-spacing:.08em;padding-bottom:8px}
+.sys-row-sub{font-size:9px;color:var(--muted);display:block}
+.save-g{width:100%;padding:11px;background:var(--gbg);border:1px solid var(--green);border-radius:4px;color:var(--green);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+.save-b{width:100%;padding:11px;background:var(--bbg);border:1px solid var(--blue);border-radius:4px;color:var(--blue);font-weight:700;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+.ver{text-align:center;margin-top:16px;font-size:9px;color:var(--hint);font-family:var(--mono);letter-spacing:.08em;padding-bottom:6px;line-height:1.8}
 
 /* ── Toast ── */
-#toastwrap{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:480px;display:flex;flex-direction:column;gap:5px;z-index:999;pointer-events:none}
-.toast-el{background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;padding:8px 13px;font-size:10px;pointer-events:all;opacity:0;transform:translateY(-5px);transition:.2s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);color:var(--txt)}
+#toastwrap{position:fixed;top:10px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:480px;display:flex;flex-direction:column;gap:5px;z-index:999;pointer-events:none}
+.toast-el{background:var(--bg2);border:1px solid var(--bdr2);border-radius:4px;padding:7px 11px;font-size:10px;pointer-events:all;opacity:0;transform:translateY(-5px);transition:.2s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);color:var(--txt)}
 .toast-el.show{opacity:1;transform:translateY(0)}
-.t-g{border-left:3px solid var(--green)}.t-r{border-left:3px solid var(--red)}.t-b{border-left:3px solid var(--blue)}
+.t-g{border-left:3px solid var(--green)}.t-r{border-left:3px solid var(--red)}.t-b{border-left:3px solid var(--blue)}.t-a{border-left:3px solid var(--amber)}
 </style>
 </head>
 <body>
 
 <div id="toastwrap"></div>
-
 <div id="app">
 
   <!-- ── Header ── -->
@@ -170,7 +205,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
       <button class="stab act" onclick="switchStock('samsung',this)">SEC · 005930</button>
       <button class="stab" onclick="switchStock('skhynix',this)">HYX · 000660</button>
     </div>
-    <div class="price-block" onclick="openNaver(STOCKS[cur].code)" title="네이버 증권 실시간 시세로 이동">
+    <div class="price-block" onclick="openNaver(STOCKS[cur].code)">
       <div class="price-label">REAL-TIME PRICE (NAVER) ↗</div>
       <div class="h-price">
         <span id="hPrice">₩-</span>
@@ -191,31 +226,93 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
   <!-- ── Content ── -->
   <div id="content">
 
-    <!-- CORE -->
+    <!-- ══ CORE ══ -->
     <div id="screen-trade" class="screen act">
       <div class="cd-box" id="cdBox">
-        <div class="cd-label">NEXT MARKET OPEN</div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:.12em;font-weight:700;margin-bottom:4px">NEXT MARKET OPEN</div>
         <div class="cd-time" id="cdTime">--:--:--</div>
         <div class="cd-sub" id="cdSub">-</div>
       </div>
-
       <div class="algo-card">
         <div class="algo-label">ALGO PREDICTION · AI RANKING</div>
         <div class="algo-val">🥇 UNICORN SK하이닉스밸류체인액티브</div>
       </div>
-
       <div class="section-label">PORTFOLIO · 반도체 ETF TOP 5 &nbsp;(터치 → 네이버 실시간)</div>
       <div id="etf-list" class="etf-grid"></div>
-
       <button class="run-btn" id="runBtn" onclick="runPortfolioAI()">▶ GEMINI PORTFOLIO ANALYSIS ↗</button>
-
       <div class="ai-rep-wrap" id="aiRepWrap">
         <div class="ai-rep-label">AI BRIEF</div>
         <div id="aiRep"></div>
       </div>
     </div>
 
-    <!-- NEWS -->
+    <!-- ══ KOSPI ══ -->
+    <div id="screen-kospi" class="screen">
+
+      <!-- 예측 카드 -->
+      <div class="pred-card">
+        <div class="pred-left">
+          <div class="pred-lbl">KOSPI 하락 위험도</div>
+          <span class="pred-badge p-safe" id="predBadge">분석 중...</span>
+        </div>
+        <div class="pred-score-wrap">
+          <div class="pred-score" id="predScore">-</div>
+          <div class="pred-score-lbl">위험 점수 / 10</div>
+        </div>
+      </div>
+
+      <!-- 알림 토글 -->
+      <div class="alert-toggle" onclick="toggleAlertMode()">
+        <span class="atg-label">하락 징조 자동 알림<span class="atg-sub">위험 점수 7 이상 시 알림 발송</span></span>
+        <div class="tg" id="alertTg"><div class="td"></div></div>
+      </div>
+
+      <!-- 차트 컨트롤 -->
+      <div class="chart-ctrl">
+        <div class="view-tabs">
+          <button class="vt act" onclick="switchKospiView('daily',this)">일봉 (30일)</button>
+          <button class="vt" onclick="switchKospiView('weekly',this)">주봉 (26주)</button>
+        </div>
+        <button class="fetch-btn" onclick="fetchKOSPI()" id="fetchBtn">↻ 실제 데이터</button>
+      </div>
+      <div class="ma-legend">
+        <span><span class="ma-dot" style="background:#ffffff"></span>MA5</span>
+        <span><span class="ma-dot" style="background:#60a5fa"></span>MA20</span>
+        <span><span class="ma-dot" style="background:#fbbf24"></span>MA60</span>
+        <span id="dataStatus" class="data-status" style="margin-left:auto"></span>
+      </div>
+
+      <!-- 캔들스틱 차트 (canvas) -->
+      <div class="canvas-wrap" style="height:260px">
+        <canvas id="candleCanvas" style="width:100%;height:100%;display:block"></canvas>
+      </div>
+
+      <!-- 거래량 차트 (canvas) -->
+      <div class="canvas-wrap" style="height:55px">
+        <div class="canvas-label">VOLUME</div>
+        <canvas id="volCanvas" style="width:100%;height:100%;display:block"></canvas>
+      </div>
+
+      <!-- RSI 차트 (Chart.js) -->
+      <div style="font-size:8px;color:var(--muted);font-family:var(--mono);margin:4px 0 2px;display:flex;justify-content:space-between">
+        <span>RSI (14)</span>
+        <span style="color:var(--red)">─ 70</span>
+        <span style="color:var(--green)">─ 30</span>
+      </div>
+      <div style="position:relative;height:65px;margin-bottom:12px">
+        <canvas id="rsiCanvas" role="img" aria-label="RSI 지표"></canvas>
+      </div>
+
+      <!-- 신호 카드 그리드 -->
+      <div class="section-label">기술적 신호 분석</div>
+      <div class="signal-grid" id="signalGrid"></div>
+
+      <!-- AI 분석 -->
+      <button class="run-btn" id="kospiAiBtn" onclick="runKOSPIAI()">▶ AI 하락 징조 심층 분석 ↗</button>
+      <div class="kospi-ai-rep" id="kospiAiRep"></div>
+    </div>
+
+    <!-- ══ NEWS ══ -->
     <div id="screen-news" class="screen">
       <div class="news-hdr">
         <span style="font-size:11px;font-weight:700;letter-spacing:.06em;font-family:var(--mono)">TOP 10 SEMI NEWS</span>
@@ -226,12 +323,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
         <button class="nf-btn" onclick="filterNews('SEC',this)">SEC 삼성전자</button>
         <button class="nf-btn" onclick="filterNews('HYX',this)">HYX SK하이닉스</button>
       </div>
-      <div id="news-list">
-        <div class="news-loading">Gemini API 키를 [SYS] 탭에서 입력 후<br>SCAN 버튼을 눌러주세요.</div>
-      </div>
+      <div id="news-list"><div class="news-loading">Gemini API 키를 [SYS] 탭에서 입력 후 SCAN을 눌러주세요.</div></div>
     </div>
 
-    <!-- CHAT -->
+    <!-- ══ CHAT ══ -->
     <div id="screen-chat" class="screen">
       <div class="ai-engine">
         <button class="eng-btn act" id="eng-gemini" onclick="setEngine('gemini',this)">GEMINI</button>
@@ -245,80 +340,58 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fo
       <div id="chatStatus">GEMINI AI ASSISTANT · READY</div>
     </div>
 
-    <!-- SYS -->
+    <!-- ══ SYS ══ -->
     <div id="screen-set" class="screen">
       <div class="sys-card">
         <div class="sys-label">GEMINI API KEY</div>
-        <div class="sys-hint">
-          Google AI Studio(aistudio.google.com)에서 발급한 API 키를 입력하세요.<br>
-          뉴스 스캔·포트폴리오 분석·채팅에 사용됩니다. 이 기기에만 저장됩니다.
-        </div>
+        <div class="sys-hint">Google AI Studio(aistudio.google.com)에서 발급.<br>뉴스·포트폴리오 분석·KOSPI AI 분석에 사용됩니다.</div>
         <input type="password" id="geminiKey" class="sys-input" placeholder="AIza...">
         <button class="save-g" onclick="saveGemini()">GEMINI KEY SAVE</button>
       </div>
-
       <div class="sys-card">
         <div class="sys-label">ANTHROPIC (CLAUDE) API KEY &nbsp;·&nbsp; 옵션</div>
-        <div class="sys-hint">
-          console.anthropic.com에서 발급한 API 키를 입력하세요.<br>
-          CHAT 탭에서 엔진을 CLAUDE로 전환하면 Claude가 응답합니다.
-        </div>
+        <div class="sys-hint">CHAT 탭에서 CLAUDE 엔진 선택 시 사용됩니다.</div>
         <input type="password" id="anthropicKey" class="sys-input" placeholder="sk-ant-api03-...">
         <button class="save-b" onclick="saveAnthropic()">ANTHROPIC KEY SAVE</button>
       </div>
-
       <div class="sys-card">
-        <div class="sys-label">STOCK REFERENCE DATA · 2026.4.17 종가</div>
-        <div class="sys-row">
-          <span class="sys-row-label">삼성전자<span class="sys-row-sub">005930 · KOSPI</span></span>
-          <span class="sys-row-val">₩216,000</span>
-        </div>
-        <div class="sys-row">
-          <span class="sys-row-label">SK하이닉스<span class="sys-row-sub">000660 · KOSPI</span></span>
-          <span class="sys-row-val">₩1,144,000</span>
-        </div>
-        <div class="sys-row">
-          <span class="sys-row-label">KRX 장 운영<span class="sys-row-sub">한국 표준시(KST)</span></span>
-          <span class="sys-row-val" style="color:var(--muted)">09:00 ~ 15:30</span>
-        </div>
-        <div class="sys-row">
-          <span class="sys-row-label">실시간 시세<span class="sys-row-sub">각 종목·ETF 터치 시</span></span>
-          <span class="sys-row-val" style="color:var(--blue)">네이버 증권 ↗</span>
-        </div>
+        <div class="sys-label">REFERENCE DATA · 2026.4.17 종가</div>
+        <div class="sys-row"><span class="sys-row-label">삼성전자<span class="sys-row-sub">005930</span></span><span style="font-size:11px;font-family:var(--mono)">₩216,000</span></div>
+        <div class="sys-row"><span class="sys-row-label">SK하이닉스<span class="sys-row-sub">000660</span></span><span style="font-size:11px;font-family:var(--mono)">₩1,144,000</span></div>
+        <div class="sys-row"><span class="sys-row-label">KOSPI<span class="sys-row-sub">^KS11</span></span><span style="font-size:11px;font-family:var(--mono)">6,207</span></div>
+        <div class="sys-row"><span class="sys-row-label">KRX 장 운영</span><span style="font-size:11px;font-family:var(--mono);color:var(--muted)">평일 09:00~15:30 KST</span></div>
       </div>
-
       <div class="sys-card">
-        <div class="sys-label">ETF 종목 코드</div>
-        <div class="sys-row"><span class="sys-row-label">UNICORN SK하이닉스VC</span><span class="sys-row-val" style="color:var(--gold)">494220</span></div>
-        <div class="sys-row"><span class="sys-row-label">KODEX 반도체</span><span class="sys-row-val">091160</span></div>
-        <div class="sys-row"><span class="sys-row-label">TIGER 코리아TOP10</span><span class="sys-row-val">292150</span></div>
-        <div class="sys-row"><span class="sys-row-label">KODEX 200</span><span class="sys-row-val">069500</span></div>
-        <div class="sys-row"><span class="sys-row-label">RISE 삼전하닉채권혼합50</span><span class="sys-row-val">480310</span></div>
+        <div class="sys-label">ETF 코드</div>
+        <div class="sys-row"><span class="sys-row-label">UNICORN SK하이닉스VC</span><span style="font-size:11px;font-family:var(--mono);color:var(--gold)">494220</span></div>
+        <div class="sys-row"><span class="sys-row-label">KODEX 반도체</span><span style="font-size:11px;font-family:var(--mono)">091160</span></div>
+        <div class="sys-row"><span class="sys-row-label">TIGER 코리아TOP10</span><span style="font-size:11px;font-family:var(--mono)">292150</span></div>
+        <div class="sys-row"><span class="sys-row-label">KODEX 200</span><span style="font-size:11px;font-family:var(--mono)">069500</span></div>
+        <div class="sys-row"><span class="sys-row-label">RISE 삼전하닉채권혼합50</span><span style="font-size:11px;font-family:var(--mono)">480310</span></div>
       </div>
-
-      <div class="ver">CHIPBOT v5.6 · ROBUST AI READY · 2026.04<br>삼성전자·SK하이닉스 반도체 투자 참고용 앱 · 실제 투자 손실에 대한 책임은 사용자에게 있습니다</div>
+      <div class="ver">CHIPBOT v6.0 · KOSPI AI ALERT SYSTEM · 2026.04<br>본 앱은 투자 참고용입니다. 실제 투자 손실 책임은 사용자에게 있습니다.</div>
     </div>
 
   </div><!-- /content -->
 
   <!-- ── Tabbar ── -->
   <div id="tabbar">
-    <button class="tb act" onclick="switchTab('trade',this)">CORE</button>
-    <button class="tb" onclick="switchTab('news',this)">NEWS</button>
-    <button class="tb" onclick="switchTab('chat',this)">CHAT</button>
-    <button class="tb" onclick="switchTab('set',this)">SYS</button>
+    <button class="tb act"  onclick="switchTab('trade',this)">CORE</button>
+    <button class="tb"      onclick="switchTab('kospi',this)">코스피</button>
+    <button class="tb"      onclick="switchTab('news',this)">NEWS</button>
+    <button class="tb"      onclick="switchTab('chat',this)">CHAT</button>
+    <button class="tb"      onclick="switchTab('set',this)">SYS</button>
   </div>
 </div>
 
 <script>
-/* ─────────────────────────────────────
-   데이터
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
 const STOCKS = {
   samsung: { name:'삼성전자', code:'005930', price:216000, prev:217500, lastDate:'2026.4.17' },
   skhynix: { name:'SK하이닉스', code:'000660', price:1144000, prev:1103000, lastDate:'2026.4.17' }
 };
-
 const ETFS = [
   { rank:'1st', name:'UNICORN SK하이닉스밸류체인액티브', code:'494220', sW:'5.2%', hW:'35.0%', type:'액티브', cls:'r1' },
   { rank:'2nd', name:'KODEX 반도체', code:'091160', sW:'20.3%', hW:'19.8%', type:'주식형', cls:'r2' },
@@ -327,92 +400,80 @@ const ETFS = [
   { rank:'5th', name:'RISE 삼전하닉채권혼합50', code:'480310', sW:'25.0%', hW:'25.0%', type:'채권혼합', cls:'r5' }
 ];
 
-/* ─────────────────────────────────────
-   상태
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
 let cur = 'samsung';
-let newsCache = [];
-let newsFilter = 'all';
-let chatEngine = 'gemini'; // 'gemini' | 'claude'
+let newsCache = [], newsFilter = 'all';
+let chatEngine = 'gemini';
+let alertMode = false;
+let kospiData = [];
+let kospiView = 'daily';
+let rsiChart = null;
+let alertTimer = null;
+let lastAlertScore = 0;
+let kospiInitialized = false;
 
-/* ─────────────────────────────────────
-   유틸
-───────────────────────────────────── */
-function getKST() { return new Date(new Date().getTime() + 9 * 3600000); }
+/* ═══════════════════════════════════════════
+   UTIL
+═══════════════════════════════════════════ */
+function getKST() { return new Date(new Date().getTime() + 9*3600000); }
 function isOpen() {
-  const k = getKST(), d = k.getUTCDay(), t = k.getUTCHours() * 60 + k.getUTCMinutes();
-  return d >= 1 && d <= 5 && t >= 540 && t < 930;
+  const k = getKST(), d = k.getUTCDay(), t = k.getUTCHours()*60+k.getUTCMinutes();
+  return d>=1 && d<=5 && t>=540 && t<930;
 }
-function pad(n) { return String(n).padStart(2, '0'); }
-function fmt(n) { return Math.round(n).toLocaleString('ko-KR'); }
-function openNaver(code) { window.open('https://m.stock.naver.com/domestic/stock/' + code + '/total', '_blank'); }
-
-function toast(msg, type = 'b') {
-  const w = document.getElementById('toastwrap');
-  const t = document.createElement('div');
-  t.className = 'toast-el t-' + type;
-  t.textContent = msg;
-  w.appendChild(t);
-  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 250); }, 3500);
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmtNum(n) { return Math.round(n).toLocaleString('ko-KR'); }
+function openNaver(code) { window.open('https://m.stock.naver.com/domestic/stock/'+code+'/total','_blank'); }
+function toast(msg,type='b') {
+  const w=document.getElementById('toastwrap'), t=document.createElement('div');
+  t.className='toast-el t-'+type; t.textContent=msg; w.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),250);},4000);
 }
 
-/* ─────────────────────────────────────
-   마켓 바 & 카운트다운
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   MARKET BAR
+═══════════════════════════════════════════ */
 function updateMarketBar() {
-  const open = isOpen(), k = getKST();
-  document.getElementById('mktBadge').textContent = open ? '장 개장' : '장 마감';
-  document.getElementById('mktBadge').className = 'mb ' + (open ? 'mb-o' : 'mb-c');
-  document.getElementById('mktClock').textContent =
-    pad(k.getUTCHours()) + ':' + pad(k.getUTCMinutes()) + ':' + pad(k.getUTCSeconds()) + ' KST';
-
-  const d = k.getUTCDay(), h = k.getUTCHours(), m = k.getUTCMinutes(),
-        s = k.getUTCSeconds(), t = h * 60 + m;
-
+  const open=isOpen(), k=getKST();
+  document.getElementById('mktBadge').textContent=open?'장 개장':'장 마감';
+  document.getElementById('mktBadge').className='mb '+(open?'mb-o':'mb-c');
+  document.getElementById('mktClock').textContent=pad(k.getUTCHours())+':'+pad(k.getUTCMinutes())+':'+pad(k.getUTCSeconds())+' KST';
+  const d=k.getUTCDay(),h=k.getUTCHours(),m=k.getUTCMinutes(),s=k.getUTCSeconds(),t=h*60+m;
   if (!open) {
     let mins;
-    if (d === 0) mins = (24 - h) * 60 - m + 9 * 60;
-    else if (d === 6) mins = (24 - h) * 60 - m + 24 * 60 + 9 * 60;
-    else if (t < 540) mins = 540 - t;
-    else { const nd = d === 5 ? 3 : 1; mins = (24 - h) * 60 - m + nd * 24 * 60 + 9 * 60; }
-
-    const tot = mins * 60 - s;
-    const rH = Math.floor(tot / 3600), rM = Math.floor((tot % 3600) / 60), rS = tot % 60;
-    document.getElementById('cdTime').textContent = pad(rH) + ':' + pad(rM) + ':' + pad(rS);
-    document.getElementById('cdSub').textContent = (d === 0 || d === 6 ? '월요일' : '다음 거래일') + ' 09:00 KST 개장 예정';
-    document.getElementById('cdBox').style.display = 'block';
-    document.getElementById('cdBadge').textContent = pad(rH) + ':' + pad(rM);
-    document.getElementById('mktInfo').textContent =
-      d === 0 || d === 6 ? '주말 · 월요일 09:00 개장' : t < 540 ? '개장 전 · 09:00 개장' : '장 마감 · 다음 거래일 09:00 개장';
+    if(d===0) mins=(24-h)*60-m+9*60;
+    else if(d===6) mins=(24-h)*60-m+24*60+9*60;
+    else if(t<540) mins=540-t;
+    else {const nd=d===5?3:1; mins=(24-h)*60-m+nd*24*60+9*60;}
+    const tot=mins*60-s, rH=Math.floor(tot/3600), rM=Math.floor((tot%3600)/60), rS=tot%60;
+    document.getElementById('cdTime').textContent=pad(rH)+':'+pad(rM)+':'+pad(rS);
+    document.getElementById('cdSub').textContent=(d===0||d===6?'월요일':'다음 거래일')+' 09:00 KST 개장 예정';
+    document.getElementById('cdBox').style.display='block';
+    document.getElementById('cdBadge').textContent=pad(rH)+':'+pad(rM);
+    document.getElementById('mktInfo').textContent=d===0||d===6?'주말 · 월요일 09:00 개장':t<540?'개장 전':'장 마감';
   } else {
-    document.getElementById('cdBox').style.display = 'none';
-    const rem = 930 - t;
-    document.getElementById('cdBadge').textContent = Math.floor(rem / 60) + 'h ' + (rem % 60) + 'm left';
-    document.getElementById('mktInfo').textContent =
-      '장 진행 중 · ' + Math.floor(rem / 60) + '시간 ' + (rem % 60) + '분 남음';
+    document.getElementById('cdBox').style.display='none';
+    const rem=930-t;
+    document.getElementById('cdBadge').textContent=Math.floor(rem/60)+'h '+( rem%60)+'m';
+    document.getElementById('mktInfo').textContent='장 진행 중 · '+Math.floor(rem/60)+'시간 '+(rem%60)+'분 남음';
   }
 }
 
-/* ─────────────────────────────────────
-   주가 UI
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   STOCK UI
+═══════════════════════════════════════════ */
 function updateUI() {
-  const s = STOCKS[cur];
-  const chg = s.price - s.prev, pct = (chg / s.prev * 100);
-  document.getElementById('hPrice').textContent = '₩' + fmt(s.price);
-  const hC = document.getElementById('hChg');
-  hC.textContent = (chg > 0 ? '▲' : '▼') + fmt(Math.abs(chg)) + ' (' + (chg >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
-  hC.className = 'h-chg ' + (chg > 0 ? 'up' : 'dn');
-  document.getElementById('hSub').textContent =
-    s.name + ' · ' + s.lastDate + ' 종가 기준 · 터치하면 네이버 증권 실시간으로 이동';
+  const s=STOCKS[cur], chg=s.price-s.prev, pct=(chg/s.prev*100);
+  document.getElementById('hPrice').textContent='₩'+fmtNum(s.price);
+  const hC=document.getElementById('hChg');
+  hC.textContent=(chg>0?'▲':'▼')+fmtNum(Math.abs(chg))+' ('+(chg>=0?'+':'')+pct.toFixed(2)+'%)';
+  hC.className='h-chg '+(chg>0?'up':'dn');
+  document.getElementById('hSub').textContent=s.name+' · '+s.lastDate+' 종가 · 터치하면 네이버 실시간으로 이동';
 }
-
-/* ─────────────────────────────────────
-   ETF UI
-───────────────────────────────────── */
 function updateETFUI() {
-  document.getElementById('etf-list').innerHTML = ETFS.map(e => `
+  document.getElementById('etf-list').innerHTML=ETFS.map(e=>`
     <div class="etf-item ${e.cls}" onclick="openNaver('${e.code}')">
       <div class="etf-rank">${e.rank}</div>
       <div class="etf-name">${e.name}</div>
@@ -426,261 +487,725 @@ function updateETFUI() {
         <span style="color:#f87171">삼성 ${e.sW}</span>
         <span style="color:#a78bfa">하닉 ${e.hW}</span>
       </div>
-      <div class="etf-link">실시간 시세 ↗</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-/* ─────────────────────────────────────
-   API 키 관리
-───────────────────────────────────── */
-function getGeminiKey() { return localStorage.getItem('gemini_key') || ''; }
-function getAnthropicKey() { return localStorage.getItem('anthropic_key') || ''; }
-
-function saveGemini() {
-  const k = document.getElementById('geminiKey').value.trim();
-  if (!k) { toast('API 키를 입력해주세요', 'r'); return; }
-  localStorage.setItem('gemini_key', k);
-  toast('Gemini API 키 저장 완료', 'g');
-}
-
-function saveAnthropic() {
-  const k = document.getElementById('anthropicKey').value.trim();
-  if (!k) { toast('API 키를 입력해주세요', 'r'); return; }
-  localStorage.setItem('anthropic_key', k);
-  toast('Anthropic API 키 저장 완료', 'g');
-  updateChatStatus();
-}
-
-/* ─────────────────────────────────────
-   API 호출
-───────────────────────────────────── */
-async function callGemini(prompt, maxTokens) {
-  const k = getGeminiKey();
-  if (!k) throw new Error('Gemini API 키 없음 — [SYS] 탭에서 입력해주세요');
-  const res = await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + k,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: maxTokens || 800 }
-      })
-    }
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'HTTP ' + res.status);
+/* ═══════════════════════════════════════════
+   KOSPI DATA GENERATION (시드)
+═══════════════════════════════════════════ */
+function generateKOSPI() {
+  const result = [];
+  // 120 trading days (~6 months) ending Apr 17 2026
+  const endDate = new Date(2026, 3, 17); // April 17 2026
+  const days = [];
+  const d = new Date(endDate);
+  while (days.length < 120) {
+    const wd = d.getDay();
+    if (wd !== 0 && wd !== 6) days.unshift(new Date(d));
+    d.setDate(d.getDate()-1);
   }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+  let price = 3900; // 6 months ago
+  const finalTarget = 6207;
+
+  days.forEach((date, i) => {
+    const progress = i / (days.length - 1);
+    // Gradual bull market trend with corrections
+    const trend = 3900 + (finalTarget - 3900) * Math.pow(progress, 0.65);
+    const vol = 50 + 30 * Math.sin(progress * Math.PI * 4) + 20 * Math.random();
+    const open = price * (1 + (Math.random()-0.5)*0.004);
+    const drift = (trend - price) * 0.06 + (Math.random()-0.46) * vol;
+    const close = Math.max(open + drift, 2800);
+    const wick = vol * 0.4;
+    const high = Math.max(open, close) + Math.random() * wick;
+    const low  = Math.min(open, close) - Math.random() * wick;
+    const volume = Math.round(280000000 + Math.random()*250000000 + (Math.abs(drift)>40?150000000:0));
+
+    result.push({
+      date: date.toISOString().split('T')[0],
+      o: Math.round(open), h: Math.round(high),
+      l: Math.round(low),  c: Math.round(close), v: volume
+    });
+    price = close;
+  });
+
+  // Fix last 3 days to realistic values
+  const n = result.length;
+  result[n-1].c = 6207; result[n-1].h = 6234; result[n-1].l = 6181; result[n-1].o = 6195;
+  result[n-2].c = 6190; result[n-2].h = 6215; result[n-2].l = 6168; result[n-2].o = 6175;
+  result[n-3].c = 6175; result[n-3].h = 6200; result[n-3].l = 6150; result[n-3].o = 6160;
+  return result;
+}
+
+function dailyToWeekly(daily) {
+  const weeks = {};
+  daily.forEach(d => {
+    const date = new Date(d.date);
+    const monday = new Date(date);
+    const diff = date.getDay() === 0 ? 6 : date.getDay() - 1;
+    monday.setDate(date.getDate() - diff);
+    const key = monday.toISOString().split('T')[0];
+    if (!weeks[key]) weeks[key] = { date: key, o: d.o, h: d.h, l: d.l, c: d.c, v: d.v };
+    else {
+      weeks[key].h = Math.max(weeks[key].h, d.h);
+      weeks[key].l = Math.min(weeks[key].l, d.l);
+      weeks[key].c = d.c; weeks[key].v += d.v;
+    }
+  });
+  return Object.values(weeks).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+/* ═══════════════════════════════════════════
+   REAL DATA FETCH
+═══════════════════════════════════════════ */
+async function fetchKOSPI() {
+  const btn = document.getElementById('fetchBtn');
+  btn.disabled = true; btn.textContent = '수신 중...';
+  document.getElementById('dataStatus').textContent = '▷ 수신 중...';
+  const proxies = [
+    u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+  ];
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EKS11?interval=1d&range=6mo';
+  let success = false;
+  for (const pFn of proxies) {
+    try {
+      const res = await fetch(pFn(url), { signal: AbortSignal.timeout(9000) });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const r = data?.chart?.result?.[0];
+      if (!r) continue;
+      const ts = r.timestamp, q = r.indicators.quote[0];
+      const parsed = ts.map((t,i)=>({
+        date: new Date(t*1000).toISOString().split('T')[0],
+        o: Math.round(q.open[i]||0), h: Math.round(q.high[i]||0),
+        l: Math.round(q.low[i]||0),  c: Math.round(q.close[i]||0),
+        v: Math.round(q.volume[i]||0)
+      })).filter(d=>d.c>0);
+      if (parsed.length >= 20) {
+        kospiData = parsed;
+        document.getElementById('dataStatus').textContent = '실제 데이터 · '+parsed.length+'일';
+        toast('KOSPI 실제 데이터 '+parsed.length+'일 수신 완료','g');
+        success = true; break;
+      }
+    } catch(e) { continue; }
+  }
+  if (!success) {
+    document.getElementById('dataStatus').textContent = '시뮬레이션 데이터';
+    toast('실제 데이터 수신 실패 — 시뮬레이션 사용','b');
+  }
+  renderKOSPI();
+  btn.disabled = false; btn.textContent = '↻ 실제 데이터';
+}
+
+/* ═══════════════════════════════════════════
+   INDICATORS
+═══════════════════════════════════════════ */
+function calcMA(closes, n) {
+  return closes.map((_, i) => {
+    if (i < n-1) return null;
+    return closes.slice(i-n+1, i+1).reduce((a,b)=>a+b,0)/n;
+  });
+}
+function calcEMA(values, n) {
+  const k = 2/(n+1); let prev = values[0]; const out = [prev];
+  for (let i=1; i<values.length; i++) { prev = values[i]*k + prev*(1-k); out.push(prev); }
+  return out;
+}
+function calcRSI(closes, n=14) {
+  const out = new Array(n).fill(null);
+  if (closes.length < n+1) return closes.map(()=>null);
+  let gains=0, losses=0;
+  for (let i=1; i<=n; i++) { const d=closes[i]-closes[i-1]; d>0?gains+=d:losses-=d; }
+  let ag=gains/n, al=losses/n;
+  out.push(al===0?100:parseFloat((100-100/(1+ag/al)).toFixed(1)));
+  for (let i=n+1; i<closes.length; i++) {
+    const d=closes[i]-closes[i-1];
+    ag=(ag*(n-1)+Math.max(0,d))/n; al=(al*(n-1)+Math.max(0,-d))/n;
+    out.push(al===0?100:parseFloat((100-100/(1+ag/al)).toFixed(1)));
+  }
+  return out;
+}
+function calcBollinger(closes, n=20) {
+  return closes.map((_, i) => {
+    if (i < n-1) return null;
+    const sl = closes.slice(i-n+1, i+1), mean=sl.reduce((a,b)=>a+b)/n;
+    const std = Math.sqrt(sl.reduce((a,b)=>a+(b-mean)**2,0)/n);
+    return { upper: mean+2*std, mid: mean, lower: mean-2*std };
+  });
+}
+function calcMACD(closes) {
+  const ema12=calcEMA(closes,12), ema26=calcEMA(closes,26);
+  const line=ema12.map((v,i)=>v-ema26[i]);
+  const signal=calcEMA(line,9);
+  return line.map((v,i)=>({ line:v, signal:signal[i], hist:v-signal[i] }));
+}
+
+/* ═══════════════════════════════════════════
+   PREDICTION ENGINE
+═══════════════════════════════════════════ */
+function calcPrediction(data) {
+  const closes = data.map(d=>d.c), n = data.length;
+  const last = data[n-1], lastClose = last.c;
+
+  const rsi   = calcRSI(closes);
+  const ma20  = calcMA(closes,20);
+  const ma60  = calcMA(closes,60);
+  const boll  = calcBollinger(closes,20);
+  const macd  = calcMACD(closes);
+  const lastRSI   = rsi[n-1]   ?? 50;
+  const prevRSI   = rsi[n-2]   ?? 50;
+  const lastMA20  = ma20[n-1]  ?? lastClose;
+  const lastMA60  = ma60[n-1]  ?? lastClose;
+  const prevMA20  = ma20[n-2]  ?? lastClose;
+  const prevMA60  = ma60[n-2]  ?? lastClose;
+  const lastBoll  = boll[n-1];
+  const lastMACD  = macd[n-1];
+  const prevMACD  = macd[n-2];
+  const avgVol    = data.slice(-20).reduce((a,b)=>a+b.v,0)/20;
+
+  let score = 0;
+  const signals = [];
+
+  // ① RSI
+  if (lastRSI >= 80) {
+    score+=3;
+    signals.push({key:'rsi',label:'RSI 극과매수',val:lastRSI.toFixed(1),level:'danger',
+      desc:'RSI '+lastRSI.toFixed(1)+' — 극도의 과매수 구간. 급락 위험 높음'});
+  } else if (lastRSI >= 70) {
+    score+=2;
+    signals.push({key:'rsi',label:'RSI 과매수',val:lastRSI.toFixed(1),level:'warning',
+      desc:'RSI '+lastRSI.toFixed(1)+' — 과매수 구간 진입. 조정 가능성'});
+  } else if (lastRSI < 30) {
+    score-=1;
+    signals.push({key:'rsi',label:'RSI 과매도',val:lastRSI.toFixed(1),level:'safe',
+      desc:'RSI '+lastRSI.toFixed(1)+' — 과매도. 반등 가능성 있음'});
+  } else {
+    signals.push({key:'rsi',label:'RSI',val:lastRSI.toFixed(1),level:'safe',
+      desc:'RSI '+lastRSI.toFixed(1)+' — 중립 구간'});
+  }
+
+  // ② MA20
+  if (lastClose < lastMA20) {
+    score+=1;
+    signals.push({key:'ma20',label:'MA20 하단',val:fmtNum(lastMA20),level:'warning',
+      desc:'현재가가 MA20('+fmtNum(lastMA20)+') 하단 — 단기 하락 추세'});
+  } else {
+    signals.push({key:'ma20',label:'MA20 상단',val:fmtNum(lastMA20),level:'safe',
+      desc:'현재가가 MA20('+fmtNum(lastMA20)+') 상단 — 단기 상승 추세'});
+  }
+
+  // ③ MA60 & 데스크로스
+  if (prevMA20 >= prevMA60 && lastMA20 < lastMA60) {
+    score+=3;
+    signals.push({key:'cross',label:'데스크로스',val:'발생!',level:'danger',
+      desc:'MA20이 MA60 아래로 돌파 — 강력한 중장기 하락 신호'});
+  } else if (lastClose < lastMA60) {
+    score+=2;
+    signals.push({key:'cross',label:'MA60 하단',val:fmtNum(lastMA60),level:'warning',
+      desc:'현재가가 MA60('+fmtNum(lastMA60)+') 하단 — 중기 하락 추세'});
+  } else {
+    signals.push({key:'cross',label:'MA 배열',val:lastMA20>lastMA60?'정배열':'역배열',
+      level:lastMA20>lastMA60?'safe':'warning',
+      desc:'MA20('+fmtNum(lastMA20)+') ' +(lastMA20>lastMA60?'>':'<')+' MA60('+fmtNum(lastMA60)+')'});
+  }
+
+  // ④ MACD
+  if (lastMACD.hist < 0 && prevMACD.hist >= 0) {
+    score+=2;
+    signals.push({key:'macd',label:'MACD 데드크로스',val:lastMACD.hist.toFixed(0),level:'danger',
+      desc:'MACD 히스토그램 음전환 — 강한 매도 신호'});
+  } else if (lastMACD.hist < 0 && lastMACD.hist < prevMACD.hist) {
+    score+=1;
+    signals.push({key:'macd',label:'MACD 음화 확대',val:lastMACD.hist.toFixed(0),level:'warning',
+      desc:'MACD 하락 모멘텀 강화 — 매도 압력 증가'});
+  } else if (lastMACD.hist > 0 && lastMACD.hist > prevMACD.hist) {
+    signals.push({key:'macd',label:'MACD 상승',val:lastMACD.hist.toFixed(0),level:'safe',
+      desc:'MACD 히스토그램 양수 확대 — 상승 모멘텀 지속'});
+  } else {
+    signals.push({key:'macd',label:'MACD',val:lastMACD.hist.toFixed(0),level:lastMACD.hist>=0?'safe':'warning',
+      desc:'MACD 히스토그램 '+lastMACD.hist.toFixed(0)});
+  }
+
+  // ⑤ 볼린저밴드
+  if (lastBoll) {
+    if (lastClose > lastBoll.upper) {
+      score+=1;
+      signals.push({key:'boll',label:'볼린저 상단 이탈',val:fmtNum(lastBoll.upper),level:'warning',
+        desc:'볼린저밴드 상단('+fmtNum(lastBoll.upper)+') 초과 — 단기 과열'});
+    } else if (lastClose < lastBoll.lower) {
+      signals.push({key:'boll',label:'볼린저 하단 이탈',val:fmtNum(lastBoll.lower),level:'safe',
+        desc:'볼린저밴드 하단 이탈 — 반등 가능성'});
+    } else {
+      signals.push({key:'boll',label:'볼린저 밴드',val:fmtNum(lastBoll.mid),level:'safe',
+        desc:'볼린저밴드 중간 구간 — 안정적'});
+    }
+  }
+
+  // ⑥ 연속 하락
+  let consecDown = 0;
+  for (let i=n-1; i>=Math.max(0,n-5); i--) {
+    if (data[i].c < data[i].o) consecDown++; else break;
+  }
+  if (consecDown >= 4) {
+    score+=2;
+    signals.push({key:'consec',label:'연속 하락',val:consecDown+'일 연속',level:'danger',
+      desc:consecDown+'일 연속 음봉 마감 — 매도세 지배'});
+  } else if (consecDown >= 2) {
+    score+=1;
+    signals.push({key:'consec',label:'연속 하락',val:consecDown+'일',level:'warning',
+      desc:consecDown+'일 연속 음봉 — 단기 하락 압력'});
+  } else {
+    signals.push({key:'consec',label:'연속 하락 없음',val:consecDown+'일',level:'safe',
+      desc:'연속 하락 없음 — 상승/보합 기조 유지'});
+  }
+
+  // ⑦ 거래량
+  if (last.c < last.o && last.v > avgVol * 1.7) {
+    score+=1;
+    signals.push({key:'vol',label:'고거래량 하락',val:(last.v/avgVol).toFixed(1)+'x',level:'warning',
+      desc:'평균 대비 '+(last.v/avgVol).toFixed(1)+'배 거래량 하락 — 강한 매도세'});
+  } else if (last.c > last.o && last.v > avgVol * 1.5) {
+    signals.push({key:'vol',label:'고거래량 상승',val:(last.v/avgVol).toFixed(1)+'x',level:'safe',
+      desc:'평균 대비 '+(last.v/avgVol).toFixed(1)+'배 거래량 상승 — 강한 매수세'});
+  } else {
+    signals.push({key:'vol',label:'거래량',val:(last.v/avgVol).toFixed(1)+'x',level:'safe',
+      desc:'거래량 정상 수준 ('+(last.v/avgVol).toFixed(1)+'x 평균)'});
+  }
+
+  score = Math.max(0, Math.min(10, score));
+  const level = score>=7?'danger':score>=5?'warning':score>=3?'caution':'safe';
+  const levelLabel = score>=7?'🔴 위험':score>=5?'🟠 경고':score>=3?'🟡 주의':'🟢 안전';
+  const levelClass = score>=7?'p-danger':score>=5?'p-warning':score>=3?'p-caution':'p-safe';
+
+  return { score, level, levelLabel, levelClass, signals, rsi:lastRSI, ma20:lastMA20, ma60:lastMA60, macdHist:lastMACD.hist };
+}
+
+/* ═══════════════════════════════════════════
+   CANVAS CHARTS
+═══════════════════════════════════════════ */
+function drawCandleChart(data) {
+  const canvas = document.getElementById('candleCanvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width === 0) return;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = rect.height;
+  const ML=56, MR=6, MT=10, MB=20;
+  const cW = W-ML-MR, cH = H-MT-MB;
+
+  // Price range
+  const highs=data.map(d=>d.h), lows=data.map(d=>d.l);
+  const maxP=Math.max(...highs), minP=Math.min(...lows);
+  const pad2=(maxP-minP)*0.07, pMin=minP-pad2, pMax=maxP+pad2, pRange=pMax-pMin;
+
+  const toX = i => ML + (i/(data.length-1||1))*cW;
+  const toY = p => MT + (1-(p-pMin)/pRange)*cH;
+  const cw  = Math.max(2, Math.floor(cW/data.length*0.65));
+
+  // Background
+  ctx.fillStyle = '#0d1015'; ctx.fillRect(0,0,W,H);
+
+  // Grid lines + price labels
+  const gridN=5;
+  for (let i=0; i<=gridN; i++) {
+    const y=MT+(i/gridN)*cH, price=pMax-(i/gridN)*pRange;
+    ctx.strokeStyle='rgba(255,255,255,.04)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(ML,y); ctx.lineTo(W-MR,y); ctx.stroke();
+    ctx.fillStyle='rgba(107,105,102,.85)';
+    ctx.font='9px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(Math.round(price).toLocaleString('ko-KR'), ML-4, y+3);
+  }
+
+  const closes = data.map(d=>d.c);
+
+  // MA lines
+  const mas=[{n:5,c:'rgba(255,255,255,.9)'},{n:20,c:'#60a5fa'},{n:60,c:'#fbbf24'}];
+  mas.forEach(ma=>{
+    const vals=calcMA(closes,ma.n);
+    ctx.strokeStyle=ma.c; ctx.lineWidth=1.2; ctx.setLineDash([]);
+    ctx.beginPath(); let first=true;
+    vals.forEach((v,i)=>{
+      if(v===null)return;
+      first?(ctx.moveTo(toX(i),toY(v)),first=false):ctx.lineTo(toX(i),toY(v));
+    });
+    ctx.stroke();
+  });
+
+  // Candlesticks
+  data.forEach((c,i)=>{
+    const x=toX(i), bull=c.c>=c.o;
+    const color=bull?'#4ade80':'#f87171', darkColor=bull?'#166534':'#991b1b';
+    // Wick
+    ctx.strokeStyle=color; ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x,toY(c.h)); ctx.lineTo(x,toY(c.l)); ctx.stroke();
+    // Body
+    const bTop=toY(Math.max(c.o,c.c)), bBot=toY(Math.min(c.o,c.c)), bH=Math.max(1,bBot-bTop);
+    ctx.fillStyle=color; ctx.fillRect(x-cw/2,bTop,cw,bH);
+    if(bH>2){ctx.strokeStyle=darkColor;ctx.lineWidth=.5;ctx.strokeRect(x-cw/2,bTop,cw,bH);}
+  });
+
+  // Date labels
+  ctx.fillStyle='rgba(107,105,102,.75)'; ctx.font='9px JetBrains Mono,monospace'; ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(data.length/6));
+  for (let i=0;i<data.length;i+=step) {
+    ctx.fillText(data[i].date.slice(5), toX(i), H-4);
+  }
+}
+
+function drawVolChart(data) {
+  const canvas = document.getElementById('volCanvas');
+  if (!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.getBoundingClientRect();
+  if(rect.width===0)return;
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr;
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height, ML=56, MR=6, MT=3, MB=3;
+  const cW=W-ML-MR, cH=H-MT-MB;
+  const maxVol=Math.max(...data.map(d=>d.v));
+  const cw=Math.max(1,Math.floor(cW/data.length*0.65));
+  ctx.fillStyle='#0d1015'; ctx.fillRect(0,0,W,H);
+  const toX=i=>ML+(i/(data.length-1||1))*cW;
+  data.forEach((c,i)=>{
+    const x=toX(i), barH=(c.v/maxVol)*cH, bull=c.c>=c.o;
+    ctx.fillStyle=bull?'rgba(74,222,128,.35)':'rgba(248,113,113,.35)';
+    ctx.fillRect(x-cw/2, MT+cH-barH, cw, barH);
+  });
+}
+
+function drawRSI(data) {
+  const closes=data.map(d=>d.c), rsi=calcRSI(closes);
+  const labels=data.map(d=>d.date.slice(5));
+  const gc='rgba(255,255,255,.05)', tc='rgba(107,105,102,.8)';
+
+  if (rsiChart) { rsiChart.destroy(); rsiChart=null; }
+  const canvas=document.getElementById('rsiCanvas');
+  if(!canvas)return;
+  rsiChart=new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets:[{data:rsi,borderColor:'#a78bfa',borderWidth:1.5,pointRadius:0,tension:.3,fill:false,spanGaps:true}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      plugins:{legend:{display:false},annotation:{
+        annotations:{
+          l70:{type:'line',yMin:70,yMax:70,borderColor:'rgba(248,113,113,.5)',borderWidth:1},
+          l30:{type:'line',yMin:30,yMax:30,borderColor:'rgba(74,222,128,.5)',borderWidth:1}
+        }
+      }},
+      scales:{
+        x:{ticks:{color:tc,font:{size:8,family:'JetBrains Mono'},maxTicksLimit:6},grid:{color:gc}},
+        y:{min:0,max:100,ticks:{color:tc,font:{size:8,family:'JetBrains Mono'},stepSize:25},grid:{color:gc}}
+      }
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════
+   KOSPI RENDER
+═══════════════════════════════════════════ */
+function renderKOSPI() {
+  const viewData = kospiView==='weekly' ? dailyToWeekly(kospiData).slice(-26) : kospiData.slice(-30);
+  const pred = calcPrediction(kospiData); // always use full daily for prediction
+
+  // Update prediction card
+  document.getElementById('predBadge').textContent = pred.levelLabel;
+  document.getElementById('predBadge').className = 'pred-badge '+pred.levelClass;
+  document.getElementById('predScore').textContent = pred.score;
+
+  // Draw charts
+  setTimeout(()=>{
+    drawCandleChart(viewData);
+    drawVolChart(viewData);
+    drawRSI(viewData);
+  }, 50);
+
+  // Signal grid (show 8 signals, 2-column)
+  document.getElementById('signalGrid').innerHTML = pred.signals.map(s=>`
+    <div class="sig-card sig-${s.level}">
+      <div class="sig-label">${s.label}</div>
+      <div class="sig-val">${s.val}</div>
+      <div class="sig-desc">${s.desc}</div>
+    </div>`).join('');
+
+  // Alert check
+  if (alertMode && pred.score >= 7 && pred.score > lastAlertScore) {
+    triggerAlert(pred);
+  }
+  lastAlertScore = pred.score;
+}
+
+function switchKospiView(view, btn) {
+  kospiView = view;
+  document.querySelectorAll('.vt').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  renderKOSPI();
+}
+
+/* ═══════════════════════════════════════════
+   ALERT SYSTEM
+═══════════════════════════════════════════ */
+function toggleAlertMode() {
+  alertMode = !alertMode;
+  document.getElementById('alertTg').classList.toggle('on', alertMode);
+  if (alertMode) {
+    reqNotif();
+    alertTimer = setInterval(()=>{
+      if (kospiData.length > 0) {
+        const pred = calcPrediction(kospiData);
+        if (pred.score >= 7 && pred.score > lastAlertScore) {
+          triggerAlert(pred);
+          lastAlertScore = pred.score;
+        }
+      }
+    }, 5 * 60 * 1000); // 5분마다 체크
+    toast('KOSPI 하락 징조 자동 알림 활성화 (5분 주기 체크)','g');
+  } else {
+    if (alertTimer) { clearInterval(alertTimer); alertTimer=null; }
+    toast('알림 비활성화','b');
+  }
+}
+
+async function reqNotif() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') {
+    await Notification.requestPermission();
+  }
+}
+
+function triggerAlert(pred) {
+  const msg = `⚠ KOSPI 하락 위험 감지 — 위험 점수 ${pred.score}/10 (${pred.levelLabel})`;
+  toast(msg, 'r');
+  if ('Notification' in window && Notification.permission==='granted') {
+    try {
+      new Notification('ChipBot · KOSPI 하락 경보', {
+        body: `위험 점수 ${pred.score}/10\n주요 신호: ${pred.signals.filter(s=>s.level==='danger'||s.level==='warning').slice(0,2).map(s=>s.label).join(', ')}`,
+        icon: ''
+      });
+    } catch(e) {}
+  }
+  // Flash badge
+  const badge = document.getElementById('predBadge');
+  if (badge) {
+    badge.style.animation = 'none';
+    setTimeout(()=>badge.style.animation='', 10);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   KOSPI AI ANALYSIS
+═══════════════════════════════════════════ */
+async function runKOSPIAI() {
+  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요','r'); return; }
+  const btn=document.getElementById('kospiAiBtn'), rep=document.getElementById('kospiAiRep');
+  btn.disabled=true; btn.textContent='▶ AI 분석 중...';
+  rep.style.display='block'; rep.textContent='Gemini AI가 KOSPI 하락 징조를 분석하고 있습니다...';
+
+  const pred=calcPrediction(kospiData);
+  const last=kospiData[kospiData.length-1];
+  const dangerSignals=pred.signals.filter(s=>s.level==='danger'||s.level==='warning').map(s=>s.desc).join('\n');
+
+  const prompt=`KOSPI 시장 분석 전문가로서 다음 기술적 데이터를 분석해주세요.\n\n`+
+    `KOSPI 현재: ${fmtNum(last.c)} (4월 17일 기준)\n`+
+    `하락 위험 점수: ${pred.score}/10 (${pred.levelLabel})\n`+
+    `RSI(14): ${pred.rsi.toFixed(1)}\n`+
+    `MA20: ${fmtNum(pred.ma20)} / MA60: ${fmtNum(pred.ma60)}\n`+
+    `MACD 히스토그램: ${pred.macdHist.toFixed(0)}\n\n`+
+    `감지된 하락 신호:\n${dangerSignals||'없음'}\n\n`+
+    `다음을 200자 이내 한국어로 브리핑해주세요:\n`+
+    `① 현재 KOSPI의 기술적 상태 ② 하락 가능성과 시나리오 ③ 투자자 대응 전략`;
+
+  try {
+    const txt = await callGemini(prompt, 500);
+    rep.textContent = txt;
+    toast('KOSPI AI 분석 완료','g');
+  } catch(e) {
+    rep.textContent='⚠ '+e.message;
+    toast('분석 실패: '+e.message,'r');
+  }
+  btn.disabled=false; btn.textContent='▶ AI 하락 징조 심층 분석 ↗';
+}
+
+/* ═══════════════════════════════════════════
+   API CALLS
+═══════════════════════════════════════════ */
+function getGeminiKey() { return localStorage.getItem('gemini_key')||''; }
+function getAnthropicKey() { return localStorage.getItem('anthropic_key')||''; }
+
+async function callGemini(prompt, maxTokens=800) {
+  const k=getGeminiKey();
+  if(!k) throw new Error('Gemini API 키 없음 — [SYS] 탭에서 입력해주세요');
+  const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+k,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens}})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+res.status);}
+  const data=await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
 }
 
 async function callClaude(prompt) {
-  const k = getAnthropicKey();
-  if (!k) throw new Error('Anthropic API 키 없음 — [SYS] 탭에서 입력해주세요');
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': k,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 600,
-      messages: [{ role: 'user', content: prompt }]
-    })
+  const k=getAnthropicKey();
+  if(!k) throw new Error('Anthropic API 키 없음');
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})
   });
-  if (!res.ok) throw new Error('Anthropic HTTP ' + res.status);
-  const data = await res.json();
-  return data.content?.[0]?.text || '';
+  if(!res.ok) throw new Error('Anthropic HTTP '+res.status);
+  const data=await res.json();
+  return data.content?.[0]?.text||'';
 }
 
-/* ─────────────────────────────────────
-   CORE: 포트폴리오 AI
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   CORE: PORTFOLIO AI
+═══════════════════════════════════════════ */
 async function runPortfolioAI() {
-  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요', 'r'); return; }
-  const btn = document.getElementById('runBtn');
-  btn.disabled = true; btn.textContent = '▶ AI ANALYZING...';
-  const wrap = document.getElementById('aiRepWrap'), rep = document.getElementById('aiRep');
-  wrap.style.display = 'block';
-  rep.textContent = 'Gemini AI가 포트폴리오를 분석하고 있습니다...';
-
-  const etfDesc = ETFS.map(e => e.rank + ': ' + e.name + '(' + e.code + ') 삼성' + e.sW + '/하닉' + e.hW).join('\n');
-  const prompt =
-    '반도체 투자 전문 AI로서 다음 포트폴리오를 분석해주세요.\n\n' +
-    '현재 주가: 삼성전자 ₩216,000, SK하이닉스 ₩1,144,000 (2026.4.17 종가 기준)\n\n' +
-    'ETF 랭킹:\n' + etfDesc + '\n\n' +
-    '다음을 150자 이내 한국어로 간결하게 브리핑해주세요:\n' +
-    '① 현재 시장 상황 ② 1위 ETF 추천 이유 ③ 투자 시 주의사항';
-
+  if(!getGeminiKey()){toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요','r');return;}
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true; btn.textContent='▶ AI ANALYZING...';
+  const wrap=document.getElementById('aiRepWrap'), rep=document.getElementById('aiRep');
+  wrap.style.display='block'; rep.textContent='Gemini AI가 포트폴리오를 분석하고 있습니다...';
+  const etfDesc=ETFS.map(e=>e.rank+': '+e.name+'('+e.code+') 삼성'+e.sW+'/하닉'+e.hW).join('\n');
+  const prompt='반도체 투자 전문가로서 다음 포트폴리오를 150자 이내로 브리핑해주세요.\n\n'+
+    '삼성전자 ₩216,000, SK하이닉스 ₩1,144,000 (2026.4.17 기준)\n\nETF 랭킹:\n'+etfDesc+
+    '\n\n① 시장 상황 ② 1위 추천 이유 ③ 주의사항';
   try {
-    rep.textContent = await callGemini(prompt, 400);
-    toast('포트폴리오 AI 분석 완료', 'g');
-  } catch (e) {
-    rep.textContent = '⚠ ' + e.message;
-    toast('분석 실패: ' + e.message, 'r');
-  }
-  btn.disabled = false;
-  btn.textContent = '▶ GEMINI PORTFOLIO ANALYSIS ↗';
+    rep.textContent = await callGemini(prompt,400);
+    toast('포트폴리오 AI 분석 완료','g');
+  } catch(e) { rep.textContent='⚠ '+e.message; toast('분석 실패','r'); }
+  btn.disabled=false; btn.textContent='▶ GEMINI PORTFOLIO ANALYSIS ↗';
 }
 
-/* ─────────────────────────────────────
-   NEWS: 뉴스 로드 & 필터
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   NEWS
+═══════════════════════════════════════════ */
 async function loadDailyNews() {
-  if (!getGeminiKey()) { toast('SYS 탭에서 Gemini API 키를 먼저 입력해주세요', 'r'); return; }
-  const list = document.getElementById('news-list'), btn = document.getElementById('newsFetchBtn');
-  btn.disabled = true; btn.textContent = 'SCANNING...';
-  list.innerHTML = '<div class="news-loading"><div class="spin"></div>Gemini AI가 최신 뉴스를 스캔하고 있습니다...</div>';
-
-  const prompt =
-    '삼성전자와 SK하이닉스의 최신 투자 뉴스 각 5개씩 총 10개를 요약해주세요.\n' +
-    '오늘 날짜: 2026년 4월 20일 (주말)\n\n' +
-    '반드시 아래 JSON 배열 형식으로만 답변하세요. 설명이나 코드블록 없이 순수 JSON만:\n' +
-    '[{"corp":"SEC","title":"뉴스 제목","sum":"2문장 핵심 요약","impact":"positive|negative|neutral"},' +
-    '{"corp":"HYX","title":"...","sum":"...","impact":"..."}]\n\n' +
-    'SEC=삼성전자, HYX=SK하이닉스. 투자에 중요한 최신 뉴스를 선별해주세요.';
-
+  if(!getGeminiKey()){toast('SYS 탭에서 API 키를 입력해주세요','r');return;}
+  const list=document.getElementById('news-list'), btn=document.getElementById('newsFetchBtn');
+  btn.disabled=true; btn.textContent='SCANNING...';
+  list.innerHTML='<div class="news-loading"><div class="spin"></div>AI가 최신 뉴스를 스캔하고 있습니다...</div>';
+  const prompt='삼성전자와 SK하이닉스의 최신 투자 뉴스 각 5개씩 총 10개를 요약해주세요.\n오늘: 2026년 4월 20일\n\n'+
+    '반드시 순수 JSON 배열만 답변 (코드블록, 설명 없이):\n'+
+    '[{"corp":"SEC","title":"제목","sum":"2문장 요약","impact":"positive|negative|neutral"}]\n\nSEC=삼성전자, HYX=SK하이닉스';
   try {
-    const raw = await callGemini(prompt, 2000);
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('JSON 포맷 오류 — AI 응답을 파싱할 수 없습니다');
-    const news = JSON.parse(match[0]);
-    if (!Array.isArray(news) || !news.length) throw new Error('뉴스 데이터 없음');
-    newsCache = news;
-    renderNews();
-    toast('뉴스 ' + news.length + '건 수신 완료', 'g');
-  } catch (e) {
-    list.innerHTML =
-      '<div class="news-err">❌ ' + e.message +
-      '<br><br>' +
-      '• API 키가 정확한지 확인해주세요<br>' +
-      '• Gemini 무료 할당량 초과 시 잠시 후 재시도<br>' +
-      '• SYS 탭에서 API 키를 재입력해주세요' +
-      '</div>';
-    toast('뉴스 수신 실패', 'r');
+    const raw=await callGemini(prompt,2000);
+    const match=raw.match(/\[[\s\S]*\]/);
+    if(!match) throw new Error('JSON 파싱 오류');
+    const news=JSON.parse(match[0]);
+    if(!Array.isArray(news)||!news.length) throw new Error('뉴스 데이터 없음');
+    newsCache=news; renderNews(); toast('뉴스 '+news.length+'건 수신','g');
+  } catch(e) {
+    list.innerHTML='<div class="news-err">❌ '+e.message+'<br><br>• API 키 확인<br>• 잠시 후 재시도</div>';
+    toast('뉴스 수신 실패','r');
   }
-  btn.disabled = false;
-  btn.textContent = '↻ SCAN';
+  btn.disabled=false; btn.textContent='↻ SCAN';
 }
-
-function filterNews(f, btn) {
-  newsFilter = f;
-  document.querySelectorAll('.nf-btn').forEach(b => b.classList.remove('act'));
-  btn.classList.add('act');
-  renderNews();
+function filterNews(f,btn){
+  newsFilter=f;
+  document.querySelectorAll('.nf-btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act'); renderNews();
 }
-
-function renderNews() {
-  const list = document.getElementById('news-list');
-  if (!newsCache.length) {
-    list.innerHTML = '<div class="news-loading">SCAN 버튼으로 뉴스를 불러오세요.</div>';
-    return;
-  }
-  const filtered = newsFilter === 'all' ? newsCache : newsCache.filter(n => n.corp === newsFilter);
-  list.innerHTML = filtered.map((n, i) => {
-    const ic = n.impact === 'positive' ? 'imp-pos' : n.impact === 'negative' ? 'imp-neg' : 'imp-neu';
-    const il = n.impact === 'positive' ? '호재' : n.impact === 'negative' ? '악재' : '중립';
-    const cc = n.corp === 'SEC' ? 'corp-sec' : 'corp-hyx';
-    const corpLabel = n.corp === 'SEC' ? '삼성전자 · SEC' : 'SK하이닉스 · HYX';
-    return '<div class="n-stack ' + cc + '">' +
-      '<div class="n-corp">' + corpLabel + ' · ' + (i + 1) + '</div>' +
-      '<div class="n-title">' + (n.title || '') + '</div>' +
-      '<div class="n-sum">' + (n.sum || '') + '</div>' +
-      '<span class="n-impact ' + ic + '">' + il + '</span>' +
-      '</div>';
+function renderNews(){
+  const list=document.getElementById('news-list');
+  if(!newsCache.length){list.innerHTML='<div class="news-loading">SCAN 버튼으로 뉴스를 불러오세요.</div>';return;}
+  const filtered=newsFilter==='all'?newsCache:newsCache.filter(n=>n.corp===newsFilter);
+  list.innerHTML=filtered.map((n,i)=>{
+    const ic=n.impact==='positive'?'imp-pos':n.impact==='negative'?'imp-neg':'imp-neu';
+    const il=n.impact==='positive'?'호재':n.impact==='negative'?'악재':'중립';
+    const cc=n.corp==='SEC'?'corp-sec':'corp-hyx';
+    return '<div class="n-stack '+cc+'">'+
+      '<div class="n-corp">'+(n.corp==='SEC'?'삼성전자 · SEC':'SK하이닉스 · HYX')+' · '+(i+1)+'</div>'+
+      '<div class="n-title">'+(n.title||'')+'</div>'+
+      '<div class="n-sum">'+(n.sum||'')+'</div>'+
+      '<span class="n-impact '+ic+'">'+il+'</span></div>';
   }).join('');
 }
 
-/* ─────────────────────────────────────
+/* ═══════════════════════════════════════════
    CHAT
-───────────────────────────────────── */
-function setEngine(engine, btn) {
-  chatEngine = engine;
-  document.querySelectorAll('.eng-btn').forEach(b => b.classList.remove('act'));
-  btn.classList.add('act');
-  updateChatStatus();
+═══════════════════════════════════════════ */
+function setEngine(engine,btn){
+  chatEngine=engine;
+  document.querySelectorAll('.eng-btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act'); updateChatStatus();
 }
-
-function updateChatStatus() {
-  const el = document.getElementById('chatStatus');
-  if (chatEngine === 'claude') {
-    el.textContent = getAnthropicKey() ? 'CLAUDE AI READY' : 'CLAUDE — SYS 탭에서 Anthropic API 키를 입력해주세요';
-  } else {
-    el.textContent = getGeminiKey() ? 'GEMINI AI READY' : 'GEMINI — SYS 탭에서 API 키를 입력해주세요';
-  }
+function updateChatStatus(){
+  document.getElementById('chatStatus').textContent=
+    chatEngine==='claude'?(getAnthropicKey()?'CLAUDE AI READY':'CLAUDE — SYS 탭에서 Anthropic 키 입력')
+                         :(getGeminiKey()?'GEMINI AI READY':'GEMINI — SYS 탭에서 API 키 입력');
 }
-
-async function sendChat() {
-  const inp = document.getElementById('chat-input');
-  const msg = inp.value.trim();
-  if (!msg) return;
-  inp.value = '';
-  addMsg('user', msg);
-  document.getElementById('chatStatus').textContent = 'AI THINKING...';
-
-  const systemCtx =
-    '당신은 삼성전자(₩216,000)와 SK하이닉스(₩1,144,000) 주식 투자 전문 AI 비서입니다. ' +
-    '2026년 4월 기준 한국 반도체 시장을 분석하고, 질문에 간결하고 정확하게 한국어로 답변합니다.';
-  const fullPrompt = systemCtx + '\n\n사용자: ' + msg;
-
+async function sendChat(){
+  const inp=document.getElementById('chat-input'), msg=inp.value.trim();
+  if(!msg)return; inp.value=''; addMsg('user',msg);
+  document.getElementById('chatStatus').textContent='AI THINKING...';
+  const ctx='당신은 삼성전자(₩216,000)·SK하이닉스(₩1,144,000)·KOSPI(6,207) 투자 전문 AI 비서입니다. 2026년 4월 기준 한국 시장을 분석하고 한국어로 답변합니다.';
   try {
-    let reply;
-    if (chatEngine === 'claude') {
-      reply = await callClaude(fullPrompt);
-    } else {
-      reply = await callGemini(fullPrompt, 500);
-    }
-    addMsg('ai', reply);
-  } catch (e) {
-    addMsg('ai', '⚠ ' + e.message);
-  }
+    const reply=chatEngine==='claude'?await callClaude(ctx+'\n\n사용자: '+msg):await callGemini(ctx+'\n\n사용자: '+msg,500);
+    addMsg('ai',reply);
+  } catch(e){addMsg('ai','⚠ '+e.message);}
   updateChatStatus();
 }
-
-function addMsg(type, text) {
-  const logs = document.getElementById('chat-logs');
-  const d = document.createElement('div');
-  d.className = type === 'user' ? 'msg-user' : 'msg-ai';
-  d.textContent = text;
-  logs.appendChild(d);
-  logs.scrollTop = logs.scrollHeight;
+function addMsg(type,text){
+  const logs=document.getElementById('chat-logs'), d=document.createElement('div');
+  d.className=type==='user'?'msg-user':'msg-ai'; d.textContent=text;
+  logs.appendChild(d); logs.scrollTop=logs.scrollHeight;
 }
 
-/* ─────────────────────────────────────
-   네비게이션
-───────────────────────────────────── */
-function switchStock(k, btn) {
-  document.querySelectorAll('.stab').forEach(t => t.classList.remove('act'));
-  btn.classList.add('act');
-  cur = k;
-  updateUI();
+/* ═══════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════ */
+function saveGemini(){
+  const k=document.getElementById('geminiKey').value.trim();
+  if(!k){toast('API 키를 입력해주세요','r');return;}
+  localStorage.setItem('gemini_key',k); toast('Gemini API 키 저장 완료','g');
+}
+function saveAnthropic(){
+  const k=document.getElementById('anthropicKey').value.trim();
+  if(!k){toast('API 키를 입력해주세요','r');return;}
+  localStorage.setItem('anthropic_key',k); toast('Anthropic API 키 저장 완료','g'); updateChatStatus();
 }
 
-function switchTab(id, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('act'));
-  document.querySelectorAll('.tb').forEach(t => t.classList.remove('act'));
-  document.getElementById('screen-' + id).classList.add('act');
-  btn.classList.add('act');
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function switchStock(k,btn){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('act')); btn.classList.add('act');
+  cur=k; updateUI();
+}
+function switchTab(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act'));
+  document.getElementById('screen-'+id).classList.add('act'); btn.classList.add('act');
+  // KOSPI tab: init on first open, redraw on every open
+  if (id==='kospi') {
+    if (!kospiInitialized) {
+      kospiData = generateKOSPI();
+      document.getElementById('dataStatus').textContent = '시뮬레이션 데이터 · 120일';
+      kospiInitialized = true;
+    }
+    setTimeout(renderKOSPI, 60);
+  }
 }
 
-/* ─────────────────────────────────────
-   초기화
-───────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
 function init() {
   updateUI();
   updateETFUI();
   updateMarketBar();
   setInterval(updateMarketBar, 1000);
 
-  const gk = localStorage.getItem('gemini_key') || '';
-  const ak = localStorage.getItem('anthropic_key') || '';
-  if (gk) document.getElementById('geminiKey').value = gk;
-  if (ak) document.getElementById('anthropicKey').value = ak;
+  const gk=localStorage.getItem('gemini_key')||'';
+  const ak=localStorage.getItem('anthropic_key')||'';
+  if(gk) document.getElementById('geminiKey').value=gk;
+  if(ak) document.getElementById('anthropicKey').value=ak;
   updateChatStatus();
 }
 
